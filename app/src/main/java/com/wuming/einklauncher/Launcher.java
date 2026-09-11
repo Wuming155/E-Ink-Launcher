@@ -29,6 +29,7 @@ import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
@@ -187,6 +188,8 @@ public class Launcher extends Activity
     // 初始化数据中心
     dataCenter = new AppDataCenter(this);
     dataCenter.setSortMode(config.getSortMode());
+    dataCenter.setLayoutLocked(config.isLayoutLocked());
+    dataCenter.setCustomOrder(config.getCustomOrder());
     dataCenter.setHideApps(config.getHideApps());
     dataCenter.setPageStatus(pageStatus);
     dataCenter.setAdapter(adapter);
@@ -294,8 +297,29 @@ public class Launcher extends Activity
 
   @Override
   public void onSortModeChanged(int mode) {
+    if (config.isLayoutLocked()) return;
     dataCenter.setSortMode(mode);
     dataCenter.refreshAppList(binder.isDelete());
+  }
+
+  @Override
+  public void onLayoutLockedChanged(boolean locked) {
+    if (locked) {
+      // 管理模式下列表包含被隐藏应用与自身，先回到常规列表再快照
+      if (binder.isDelete()) {
+        binder.setDelete(false);
+        findViewById(R.id.deleteFinish).setVisibility(View.GONE);
+        dataCenter.refreshAppList();
+      }
+      // 取当前屏幕顺序快照并固化
+      List<String> order = dataCenter.getAppOrder();
+      config.setCustomOrder(order);
+      dataCenter.setCustomOrder(order);
+      dataCenter.setLayoutLocked(true);
+    } else {
+      dataCenter.setLayoutLocked(false);
+    }
+    dataCenter.refreshAppList();
   }
 
   // =========================================================================

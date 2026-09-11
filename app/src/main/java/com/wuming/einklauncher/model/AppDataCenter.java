@@ -37,6 +37,8 @@ public class AppDataCenter {
   private TextView pageStatus;
   private final Set<String> hideApps = new HashSet<>();
   private int sortMode = AppSortComparator.SORT_NAME_ASC;
+  private boolean layoutLocked = false;
+  private final List<String> customOrder = new ArrayList<>();
 
   public AppDataCenter(Context context) {
     this.mContext = context;
@@ -108,6 +110,32 @@ public class AppDataCenter {
 
   public int getSortMode() {
     return sortMode;
+  }
+
+  /** 设置布局锁定状态：锁定后忽略 {@link #sortMode}，改用自定义顺序 */
+  public void setLayoutLocked(boolean locked) {
+    this.layoutLocked = locked;
+  }
+
+  public boolean isLayoutLocked() {
+    return layoutLocked;
+  }
+
+  /** 设置自定义顺序（包名列表） */
+  public void setCustomOrder(List<String> order) {
+    customOrder.clear();
+    if (order != null) {
+      customOrder.addAll(order);
+    }
+  }
+
+  /** 返回当前列表顺序（包名），用于布局锁定时快照固化 */
+  public List<String> getAppOrder() {
+    List<String> order = new ArrayList<>(mApps.size());
+    for (ResolveInfo info : mApps) {
+      order.add(info.activityInfo.packageName);
+    }
+    return order;
   }
 
   // =========================================================================
@@ -205,7 +233,9 @@ public class AppDataCenter {
   }
 
   private void sortApps() {
-    Collections.sort(mApps, new AppSortComparator(mContext, mContext.getPackageManager(), sortMode));
+    int mode = layoutLocked ? AppSortComparator.SORT_CUSTOM : sortMode;
+    Collections.sort(mApps,
+        new AppSortComparator(mContext, mContext.getPackageManager(), mode, customOrder));
   }
 
   // =========================================================================

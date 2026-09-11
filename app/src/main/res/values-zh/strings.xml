@@ -75,6 +75,12 @@
     <string name="app_show_name">App 名字</string>
     <string name="setting_sort_mode">排序方式</string>
     <string name="sort_need_usage_permission">此排序模式需要授予使用情况访问权限</string>
+    <string name="setting_layout_lock">布局锁定</string>
+    <string name="setting_show_lock_hint">显示锁定提示</string>
+    <string name="layout_lock_confirm_title">开启布局锁定</string>
+    <string name="layout_lock_confirm_message">将固化当前图标顺序，新安装的应用只能追加到末尾；解锁前无法修改排序方式。是否继续？</string>
+    <string name="layout_locked_toast">布局已锁定，请先解锁</string>
+    <string name="dialog_ok">确定</string>
     <string name="launch_failed">启动失败</string>
     <string name="launch_devicemanager">打开设备管理器</string>
     <string name="launch_devicemanager_failed">请打开设备管理器并启用 E-Ink Launcher</string>

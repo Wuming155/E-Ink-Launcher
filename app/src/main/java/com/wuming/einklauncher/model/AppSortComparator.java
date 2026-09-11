@@ -41,18 +41,31 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
   public static final int SORT_USAGE_DESC = 5;
   public static final int SORT_RECENT_ASC = 6;
   public static final int SORT_RECENT_DESC = 7;
+  /** 自定义顺序：布局锁定后按持久化的顺序排列 */
+  public static final int SORT_CUSTOM = 8;
 
   private final int mode;
   private final PackageManager pm;
   private final Collator collator;
   private final Map<String, Long> installTimeCache = new HashMap<>();
+  private final Map<String, Integer> customIndex = new HashMap<>();
   private Map<String, UsageStats> usageStatsMap;
 
   public AppSortComparator(Context context, PackageManager pm, int mode) {
+    this(context, pm, mode, null);
+  }
+
+  public AppSortComparator(Context context, PackageManager pm, int mode, List<String> customOrder) {
     this.mode = mode;
     this.pm = pm;
     this.collator = Collator.getInstance(Locale.getDefault());
     this.collator.setStrength(Collator.PRIMARY);
+
+    if (customOrder != null) {
+      for (int i = 0; i < customOrder.size(); i++) {
+        customIndex.put(customOrder.get(i), i);
+      }
+    }
 
     if (needsUsageStats()) {
       usageStatsMap = queryUsageStats(context);
@@ -103,9 +116,29 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
         return Long.compare(getLastUsed(a), getLastUsed(b));
       case SORT_RECENT_DESC:
         return Long.compare(getLastUsed(b), getLastUsed(a));
+      case SORT_CUSTOM:
+        return compareByCustom(a, b);
       default:
         return compareByName(a, b);
     }
+  }
+
+  /**
+   * 按自定义顺序比较：已登记的包名按其索引排列；
+   * 未登记的包名（新安装的应用）统一排在已登记项之后，彼此按名称排序。
+   */
+  private int compareByCustom(ResolveInfo a, ResolveInfo b) {
+    int indexA = getCustomIndex(a);
+    int indexB = getCustomIndex(b);
+    if (indexA != indexB) {
+      return indexA < indexB ? -1 : 1;
+    }
+    return compareByName(a, b);
+  }
+
+  private int getCustomIndex(ResolveInfo info) {
+    Integer index = customIndex.get(info.activityInfo.packageName);
+    return index != null ? index : Integer.MAX_VALUE;
   }
 
   private boolean isVirtual(ResolveInfo info) {

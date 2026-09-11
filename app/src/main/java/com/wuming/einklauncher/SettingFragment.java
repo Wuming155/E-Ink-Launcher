@@ -2,10 +2,12 @@ package com.wuming.einklauncher;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
@@ -43,6 +45,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     void onShowStatusBarChanged(boolean show);
     void onShowCustomIconChanged(boolean show);
     void onSortModeChanged(int mode);
+    void onLayoutLockedChanged(boolean locked);
     void onEnterManageMode();
   }
 
@@ -59,6 +62,8 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   private TextView ftpStatus;
   private TextView showStatusBar;
   private TextView showCustomIcon;
+  private TextView layoutLock;
+  private TextView showLockHint;
   private Config config;
 
   @SuppressWarnings("deprecation")
@@ -105,6 +110,8 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
 
     showStatusBar = rootView.findViewById(R.id.showStatusBar);
     showCustomIcon = rootView.findViewById(R.id.showCustomIcon);
+    layoutLock = rootView.findViewById(R.id.layoutLock);
+    showLockHint = rootView.findViewById(R.id.showLockHint);
     ftpStatus = rootView.findViewById(R.id.ftp_status);
     ftpAddr = rootView.findViewById(R.id.ftp_addr);
     hideDivider = rootView.findViewById(R.id.hideDivider);
@@ -117,12 +124,16 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     showStatusBar.setOnClickListener(this);
     hideDivider.setOnClickListener(this);
     showCustomIcon.setOnClickListener(this);
+    layoutLock.setOnClickListener(this);
+    showLockHint.setOnClickListener(this);
 
     // 初始化 UI 状态
     showStatusBar.getPaint().setStrikeThruText(config.isShowStatusBar());
     hideDivider.getPaint().setStrikeThruText(config.isHideDivider());
     hideDivider.setText(config.isHideDivider() ? "显示分隔线" : "隐藏分隔线");
     showCustomIcon.getPaint().setStrikeThruText(config.isShowCustomIcon());
+    layoutLock.getPaint().setStrikeThruText(config.isLayoutLocked());
+    showLockHint.getPaint().setStrikeThruText(config.isShowLockHint());
     fontControl.setProgress((int) ((config.getFontSize() - 10) * 10));
   }
 
@@ -173,6 +184,16 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     sortModeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        if (config.isLayoutLocked()) {
+          // 锁定状态下拒绝切换排序方式，回退到原选项
+          if (position != config.getSortMode()) {
+            if (config.isShowLockHint()) {
+              Toast.makeText(getActivity(), R.string.layout_locked_toast, Toast.LENGTH_SHORT).show();
+            }
+            sortModeSpinner.setSelection(config.getSortMode(), false);
+          }
+          return;
+        }
         if (AppSortComparator.modeNeedsUsageStats(position)
             && !AppSortComparator.hasUsageStatsPermission(getActivity())) {
           Toast.makeText(getActivity(), R.string.sort_need_usage_permission, Toast.LENGTH_LONG).show();
@@ -247,6 +268,10 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
       handleShowWifiName();
     } else if (id == R.id.showCustomIcon) {
       handleToggleCustomIcon();
+    } else if (id == R.id.layoutLock) {
+      handleToggleLayoutLock();
+    } else if (id == R.id.showLockHint) {
+      handleToggleLockHint();
     } else if (id == R.id.openDeviceManager) {
       startActivity(new Intent().setComponent(
           new ComponentName("com.android.settings", "com.android.settings.DeviceAdminSettings")));
@@ -306,6 +331,36 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
         getActivity().onBackPressed();
       }
     });
+  }
+
+  /** 布局锁定开关：开启需二次确认，解锁直接生效 */
+  private void handleToggleLayoutLock() {
+    if (config.isLayoutLocked()) {
+      config.setLayoutLocked(false);
+      listener.onLayoutLockedChanged(false);
+      getActivity().onBackPressed();
+      return;
+    }
+    new AlertDialog.Builder(getActivity())
+        .setTitle(R.string.layout_lock_confirm_title)
+        .setMessage(R.string.layout_lock_confirm_message)
+        .setPositiveButton(R.string.dialog_ok, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            config.setLayoutLocked(true);
+            listener.onLayoutLockedChanged(true);
+            getActivity().onBackPressed();
+          }
+        })
+        .setNegativeButton(R.string.dialog_cancel, null)
+        .show();
+  }
+
+  /** 锁定提示开关：仅控制排序方式被拒绝时是否弹 Toast */
+  private void handleToggleLockHint() {
+    boolean newValue = !config.isShowLockHint();
+    config.setShowLockHint(newValue);
+    showLockHint.getPaint().setStrikeThruText(newValue);
   }
 
   @Override

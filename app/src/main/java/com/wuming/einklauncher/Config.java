@@ -3,7 +3,9 @@ package com.wuming.einklauncher;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -23,6 +25,12 @@ public class Config {
   public static final String KEY_SHOW_STATUS_BAR = "launcherShowStatusBar";
   public static final String KEY_SHOW_CUSTOM_ICON = "launcherShowCustomIcon";
   public static final String KEY_SORT_MODE = "launcherSortMode";
+  public static final String KEY_LAYOUT_LOCKED = "launcherLayoutLocked";
+  public static final String KEY_SHOW_LOCK_HINT = "launcherShowLockHint";
+  public static final String KEY_CUSTOM_ORDER = "launcherCustomOrder";
+
+  /** 自定义顺序的分隔符（包名不含换行符，可安全用作分隔符） */
+  private static final String ORDER_SEPARATOR = "\n";
 
   // ---- 默认值 ----
   private static final int DEFAULT_COL_NUM = 5;
@@ -33,6 +41,8 @@ public class Config {
   private static final boolean DEFAULT_SHOW_STATUS_BAR = true;
   private static final boolean DEFAULT_SHOW_CUSTOM_ICON = false;
   private static final int DEFAULT_SORT_MODE = 0;
+  private static final boolean DEFAULT_LAYOUT_LOCKED = false;
+  private static final boolean DEFAULT_SHOW_LOCK_HINT = true;
 
   private static final String PREFS_FILE = "launcherPropertyFile";
 
@@ -47,6 +57,9 @@ public class Config {
   private boolean showStatusBar;
   private boolean showCustomIcon;
   private int sortMode = -1;
+  private boolean layoutLocked;
+  private boolean showLockHint;
+  private List<String> customOrder;
   private final Set<String> hideApps = new HashSet<>();
   private boolean hideAppsLoaded = false;
 
@@ -57,6 +70,8 @@ public class Config {
     this.showStatusBar = prefs.getBoolean(KEY_SHOW_STATUS_BAR, DEFAULT_SHOW_STATUS_BAR);
     this.showCustomIcon = prefs.getBoolean(KEY_SHOW_CUSTOM_ICON, DEFAULT_SHOW_CUSTOM_ICON);
     this.appNameLines = prefs.getInt(KEY_APP_NAME_LINES, DEFAULT_APP_NAME_LINES);
+    this.layoutLocked = prefs.getBoolean(KEY_LAYOUT_LOCKED, DEFAULT_LAYOUT_LOCKED);
+    this.showLockHint = prefs.getBoolean(KEY_SHOW_LOCK_HINT, DEFAULT_SHOW_LOCK_HINT);
   }
 
   // ---- 列数 ----
@@ -193,5 +208,57 @@ public class Config {
     if (this.sortMode == mode) return;
     this.sortMode = mode;
     prefs.edit().putInt(KEY_SORT_MODE, mode).apply();
+  }
+
+  // ---- 布局锁定 ----
+
+  /** 布局是否已锁定（锁定后图标顺序固化，排序方式不可修改） */
+  public boolean isLayoutLocked() {
+    return layoutLocked;
+  }
+
+  public void setLayoutLocked(boolean locked) {
+    this.layoutLocked = locked;
+    prefs.edit().putBoolean(KEY_LAYOUT_LOCKED, locked).apply();
+  }
+
+  /** 锁定状态下切换排序方式被拒绝时，是否弹出提示 */
+  public boolean isShowLockHint() {
+    return showLockHint;
+  }
+
+  public void setShowLockHint(boolean show) {
+    this.showLockHint = show;
+    prefs.edit().putBoolean(KEY_SHOW_LOCK_HINT, show).apply();
+  }
+
+  // ---- 自定义顺序（布局锁定时用于固化图标顺序） ----
+
+  /** 获取自定义顺序（包名有序列表），未设置时返回空列表 */
+  public List<String> getCustomOrder() {
+    if (customOrder == null) {
+      customOrder = new ArrayList<>();
+      String raw = prefs.getString(KEY_CUSTOM_ORDER, "");
+      if (raw != null && !raw.isEmpty()) {
+        for (String pkg : raw.split(ORDER_SEPARATOR)) {
+          if (!pkg.isEmpty()) {
+            customOrder.add(pkg);
+          }
+        }
+      }
+    }
+    return customOrder;
+  }
+
+  public void setCustomOrder(List<String> order) {
+    customOrder = new ArrayList<>(order);
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < customOrder.size(); i++) {
+      if (i > 0) {
+        sb.append(ORDER_SEPARATOR);
+      }
+      sb.append(customOrder.get(i));
+    }
+    prefs.edit().putString(KEY_CUSTOM_ORDER, sb.toString()).apply();
   }
 }

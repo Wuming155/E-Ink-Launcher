@@ -79,4 +79,10 @@
     <string name="app_show_name">App name</string>
     <string name="setting_sort_mode">Sort</string>
     <string name="sort_need_usage_permission">Please grant usage access permission for this sort mode</string>
+    <string name="setting_layout_lock">Layout Lock</string>
+    <string name="setting_show_lock_hint">Show Lock Hint</string>
+    <string name="layout_lock_confirm_title">Enable Layout Lock</string>
+    <string name="layout_lock_confirm_message">The current icon order will be frozen and newly installed apps will be appended to the end. Sort mode cannot be changed until you unlock. Continue?</string>
+    <string name="layout_locked_toast">Layout is locked, unlock it first</string>
+    <string name="dialog_ok">OK</string>
 </resources>
