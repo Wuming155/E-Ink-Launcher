@@ -12,7 +12,10 @@ projectFilesBackup
 .idea
 config.gradle
 KeyStore.key
-release/output.json
+
+# 构建产物（不入库；app/release/preview.png 为 README 展示图，保留）
+app/release/mapping.txt
+app/release/output.json
 
 # 签名密钥库与凭据（禁止入库）
 KeyStore.jks

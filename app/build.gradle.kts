@@ -22,8 +22,8 @@ android {
         applicationId = "com.wuming.einklauncher"
         minSdk = 14
         targetSdk = 36
-        versionCode = 30
-        versionName = "0.1.8.6"
+        versionCode = 1
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -67,7 +67,7 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core:1.12.0")
-    implementation("org.apache.ftpserver:ftplet-api:1.2.1")
-    implementation("org.apache.ftpserver:ftpserver-core:1.2.1")
+    implementation(libs.androidx.core)
+    implementation(libs.apache.ftplet.api)
+    implementation(libs.apache.ftpserver.core)
 }
