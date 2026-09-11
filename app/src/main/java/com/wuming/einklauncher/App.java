@@ -1,4 +1,4 @@
-package cn.modificator.launcher;
+package com.wuming.einklauncher;
 
 import android.app.Application;
 

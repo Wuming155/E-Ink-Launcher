@@ -1,4 +1,4 @@
-package cn.modificator.launcher.model;
+package com.wuming.einklauncher.model;
 
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;

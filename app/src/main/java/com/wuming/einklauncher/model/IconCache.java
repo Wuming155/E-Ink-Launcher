@@ -1,4 +1,4 @@
-package cn.modificator.launcher.model;
+package com.wuming.einklauncher.model;
 
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;

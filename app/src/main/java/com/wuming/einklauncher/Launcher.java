@@ -1,4 +1,4 @@
-package cn.modificator.launcher;
+package com.wuming.einklauncher;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -32,17 +32,17 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.Set;
 
-import cn.modificator.launcher.ftpservice.FTPReceiver;
-import cn.modificator.launcher.ftpservice.FTPService;
-import cn.modificator.launcher.model.AdminReceiver;
-import cn.modificator.launcher.model.AppDataCenter;
-import cn.modificator.launcher.model.HomeEntranceService;
-import cn.modificator.launcher.model.IconCache;
-import cn.modificator.launcher.model.WifiControl;
-import cn.modificator.launcher.widgets.AppItemBinder;
-import cn.modificator.launcher.widgets.BatteryView;
-import cn.modificator.launcher.widgets.EInkLauncherView;
-import cn.modificator.launcher.widgets.LauncherAdapter;
+import com.wuming.einklauncher.ftpservice.FTPReceiver;
+import com.wuming.einklauncher.ftpservice.FTPService;
+import com.wuming.einklauncher.model.AdminReceiver;
+import com.wuming.einklauncher.model.AppDataCenter;
+import com.wuming.einklauncher.model.HomeEntranceService;
+import com.wuming.einklauncher.model.IconCache;
+import com.wuming.einklauncher.model.WifiControl;
+import com.wuming.einklauncher.widgets.AppItemBinder;
+import com.wuming.einklauncher.widgets.BatteryView;
+import com.wuming.einklauncher.widgets.EInkLauncherView;
+import com.wuming.einklauncher.widgets.LauncherAdapter;
 
 /**
  * 主界面 Activity - E-Ink 墨水屏桌面启动器。

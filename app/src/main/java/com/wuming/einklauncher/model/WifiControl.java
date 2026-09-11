@@ -1,4 +1,4 @@
-package cn.modificator.launcher.model;
+package com.wuming.einklauncher.model;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -15,10 +15,10 @@ import android.view.View;
 import java.io.File;
 import java.util.Map;
 
-import cn.modificator.launcher.R;
-import cn.modificator.launcher.Utils;
-import cn.modificator.launcher.widgets.ObserverFontTextView;
-import cn.modificator.launcher.widgets.RatioImageView;
+import com.wuming.einklauncher.R;
+import com.wuming.einklauncher.Utils;
+import com.wuming.einklauncher.widgets.ObserverFontTextView;
+import com.wuming.einklauncher.widgets.RatioImageView;
 
 /**
  * WiFi 状态管理及 UI 绑定。

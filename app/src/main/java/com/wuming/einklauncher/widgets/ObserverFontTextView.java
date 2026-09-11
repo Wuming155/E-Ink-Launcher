@@ -1,4 +1,4 @@
-package cn.modificator.launcher.widgets;
+package com.wuming.einklauncher.widgets;
 
 import android.content.Context;
 
@@ -10,12 +10,6 @@ import android.widget.TextView;
 
 import java.util.Observable;
 import java.util.Observer;
-
-/**
- * Created by Modificator
- * time: 16/12/3.上午2:03
- * des:create file and achieve model
- */
 
 public class ObserverFontTextView extends TextView implements Observer {
   public ObserverFontTextView(Context context) {

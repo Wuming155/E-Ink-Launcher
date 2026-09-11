@@ -1,4 +1,4 @@
-package cn.modificator.launcher.model;
+package com.wuming.einklauncher.model;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -10,8 +10,8 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 
-import cn.modificator.launcher.Launcher;
-import cn.modificator.launcher.R;
+import com.wuming.einklauncher.Launcher;
+import com.wuming.einklauncher.R;
 
 public class HomeEntranceService extends Service {
 

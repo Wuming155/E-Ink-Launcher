@@ -1,11 +1,11 @@
-package cn.modificator.launcher.widgets;
+package com.wuming.einklauncher.widgets;
 
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.ViewGroup;
 
-import cn.modificator.launcher.R;
+import com.wuming.einklauncher.R;
 
 import static android.view.View.MeasureSpec.EXACTLY;
 import static android.view.View.MeasureSpec.makeMeasureSpec;

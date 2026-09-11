@@ -1,4 +1,4 @@
-package cn.modificator.launcher;
+package com.wuming.einklauncher;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -79,11 +79,8 @@ public class CrashDetailPage extends Activity {
     tvContent.append(titleSpan);
     tvContent.append("\nーーーーーーーーーーーーーーーーーーーー\n");
     tvContent.append("Please screenshot and give me feedback.\n");
-    tvContent.append("email    : yunshangcn@gmail.com\n");
-    tvContent.append("telegram : https://t.me/EInkLauncher\n");
-    tvContent.append("github issues : https://github.com/Modificator/E-Ink-Launcher\n");
+    tvContent.append("github issues : https://github.com/Wuming155/E-Ink-Launcher/issues\n");
     tvContent.append("well it's already open source\n");
-    tvContent.append("当然也可以在酷安应用页反馈\n");
     tvContent.append("Thanks.");
     tvContent.append("\nーーーーーーーーーーーーーーーーーーーー\n");
 

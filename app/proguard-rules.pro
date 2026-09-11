@@ -16,7 +16,7 @@
 #   public *;
 #}
 
--keep public class cn.modificator.launcher.R$*{
+-keep public class com.wuming.einklauncher.R$*{
     public static final int *;
 }
 #-keep class org.apache.** {*;}

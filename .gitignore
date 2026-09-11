@@ -13,3 +13,9 @@ projectFilesBackup
 config.gradle
 KeyStore.key
 release/output.json
+
+# 签名密钥库与凭据（禁止入库）
+KeyStore.jks
+keystore.properties
+*.jks
+*.keystore

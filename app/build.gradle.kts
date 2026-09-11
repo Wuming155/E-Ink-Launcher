@@ -1,14 +1,25 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
 }
 
+// 从仓库根目录的 keystore.properties 读取签名信息；该文件不入库（见 .gitignore）
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
+}
+val hasReleaseSigning = keystorePropertiesFile.exists()
+
 android {
-    namespace = "cn.modificator.launcher"
+    namespace = "com.wuming.einklauncher"
     compileSdk = 36
     enableKotlin = false
 
     defaultConfig {
-        applicationId = "cn.modificator.launcher"
+        applicationId = "com.wuming.einklauncher"
         minSdk = 14
         targetSdk = 36
         versionCode = 30
@@ -17,11 +28,25 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {

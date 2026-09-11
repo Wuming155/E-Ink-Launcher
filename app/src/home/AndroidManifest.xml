@@ -13,7 +13,7 @@
             </intent-filter>
         </activity>-->
         <activity
-            android:name="cn.modificator.launcher.Launcher"
+            android:name="com.wuming.einklauncher.Launcher"
             android:launchMode="singleInstance"
             android:exported="true">
             <intent-filter>

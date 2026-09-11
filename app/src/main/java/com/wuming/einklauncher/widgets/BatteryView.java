@@ -1,4 +1,4 @@
-package cn.modificator.launcher.widgets;
+package com.wuming.einklauncher.widgets;
 
 import android.content.Context;
 import android.graphics.Canvas;

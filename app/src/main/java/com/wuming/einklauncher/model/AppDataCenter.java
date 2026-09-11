@@ -1,4 +1,4 @@
-package cn.modificator.launcher.model;
+package com.wuming.einklauncher.model;
 
 import android.content.Context;
 import android.content.Intent;
@@ -12,9 +12,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import cn.modificator.launcher.R;
-import cn.modificator.launcher.widgets.AppItemBinder;
-import cn.modificator.launcher.widgets.LauncherAdapter;
+import com.wuming.einklauncher.R;
+import com.wuming.einklauncher.widgets.AppItemBinder;
+import com.wuming.einklauncher.widgets.LauncherAdapter;
 
 /**
  * 应用数据管理中心，负责加载应用列表和分页逻辑。
@@ -158,7 +158,7 @@ public class AppDataCenter {
 
     mApps.clear();
     for (ResolveInfo resolveInfo : mContext.getPackageManager().queryIntentActivities(mainIntent, 0)) {
-      if ("cn.modificator.launcher.Launcher".equals(resolveInfo.activityInfo.name)) continue;
+      if ("com.wuming.einklauncher.Launcher".equals(resolveInfo.activityInfo.name)) continue;
       if (!hideApps.contains(resolveInfo.activityInfo.packageName)) {
         mApps.add(resolveInfo);
       }

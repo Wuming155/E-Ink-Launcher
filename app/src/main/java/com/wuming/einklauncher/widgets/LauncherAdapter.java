@@ -1,4 +1,4 @@
-package cn.modificator.launcher.widgets;
+package com.wuming.einklauncher.widgets;
 
 import android.text.TextUtils;
 import android.util.TypedValue;
@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observer;
 
-import cn.modificator.launcher.R;
-import cn.modificator.launcher.model.ObservableFloat;
+import com.wuming.einklauncher.R;
+import com.wuming.einklauncher.model.ObservableFloat;
 
 /**
  * {@link EInkLauncherView} 的数据适配器，管理 ViewHolder 池、数据列表和显示参数。

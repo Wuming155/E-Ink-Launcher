@@ -1,4 +1,4 @@
-package cn.modificator.launcher.widgets;
+package com.wuming.einklauncher.widgets;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import cn.modificator.launcher.R;
-import cn.modificator.launcher.model.AppDataCenter;
-import cn.modificator.launcher.model.IconCache;
-import cn.modificator.launcher.model.WifiControl;
+import com.wuming.einklauncher.R;
+import com.wuming.einklauncher.model.AppDataCenter;
+import com.wuming.einklauncher.model.IconCache;
+import com.wuming.einklauncher.model.WifiControl;
 
 /**
  * 负责将应用数据绑定到 {@link LauncherAdapter.ItemViewHolder}，

@@ -1,4 +1,4 @@
-package cn.modificator.launcher.widgets;
+package com.wuming.einklauncher.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -6,7 +6,7 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.ImageView;
 
-import cn.modificator.launcher.R;
+import com.wuming.einklauncher.R;
 
 /**
  * 按照宽高比例自适应尺寸的 ImageView。

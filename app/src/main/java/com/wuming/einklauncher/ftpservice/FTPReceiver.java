@@ -1,4 +1,4 @@
-package cn.modificator.launcher.ftpservice;
+package com.wuming.einklauncher.ftpservice;
 
 /**
  * Created by yashwanthreddyg on 09-06-2016.

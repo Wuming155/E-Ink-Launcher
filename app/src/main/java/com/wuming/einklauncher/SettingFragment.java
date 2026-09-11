@@ -1,4 +1,4 @@
-package cn.modificator.launcher;
+package com.wuming.einklauncher;
 
 import android.Manifest;
 import android.app.Activity;
@@ -24,9 +24,9 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import cn.modificator.launcher.ftpservice.FTPService;
-import cn.modificator.launcher.model.AppSortComparator;
-import cn.modificator.launcher.model.WifiControl;
+import com.wuming.einklauncher.ftpservice.FTPService;
+import com.wuming.einklauncher.model.AppSortComparator;
+import com.wuming.einklauncher.model.WifiControl;
 
 /**
  * 设置页面 Fragment。
