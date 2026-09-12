@@ -18,15 +18,11 @@
     <string name="type_word">Document</string>
     <string name="type_apk">APK</string>
 
-    <string name="setting_cloud_manager_on">Cloud Manager - ON</string>
-    <string name="setting_cloud_manager_off">Cloud Manager - OFF</string>
-    <string name="setting_cloud_manager_wifi_off">Cloud Manager\n -- No WIFI connect</string>
     <string name="battery_status_low_battery">Low power</string>
     <string name="setting_show_divider">Show Divider</string>
     <string name="setting_hide_divider">Hide Divider</string>
     <string name="setting_set_font_size">Change Font Size</string>
     <string name="setting_apps_manager">Apps Manager</string>
-    <string name="setting_open_device_manager">Open Device Manager</string>
     <string name="setting_column_icons">Column</string>
     <string name="setting_row_icons">"   Row   "</string>
     <string name="toast_need_wifi_connnect">Please connect Wlan!</string>
@@ -39,6 +35,7 @@
     <string name="battery_wtf" translatable="false">WTF?</string>
 
     <string name="dialog_cancel">Cancel</string>
+    <string name="dialog_rename">Rename</string>
     <string name="dialog_hide">Hide</string>
     <string name="dialog_uninstall">Uninstall</string>
     <string name="dialog_pkg_name">Package Name: %s</string>
@@ -73,9 +70,7 @@
     <string name="exit">Exit</string>
     <string name="delete">Delete</string>
     <string name="show_statusbar">Show StatusBar</string>
-    <string name="show_wifi_name">Show Wifi Name</string>
     <string name="show_custom_icon">Show custom icon</string>
-    <string name="notification_click_back_launcher">Click here, back to Launcher</string>
     <string name="app_show_name">App name</string>
     <string name="setting_sort_mode">Sort</string>
     <string name="sort_need_usage_permission">Please grant usage access permission for this sort mode</string>
@@ -84,5 +79,7 @@
     <string name="layout_lock_confirm_title">Enable Layout Lock</string>
     <string name="layout_lock_confirm_message">The current icon order will be frozen and newly installed apps will be appended to the end. Sort mode cannot be changed until you unlock. Continue?</string>
     <string name="layout_locked_toast">Layout is locked, unlock it first</string>
+    <string name="setting_layout_adjust">Adjust Layout</string>
+    <string name="adjust_mode_hint">Adjust layout: long-press to select an app, then tap another to swap positions. Tap the selected app again to cancel.</string>
     <string name="dialog_ok">OK</string>
 </resources>

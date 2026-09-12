@@ -23,7 +23,6 @@
     <string name="setting_hide_divider">隐藏分隔线</string>
     <string name="setting_set_font_size">设置字体大小</string>
     <string name="setting_apps_manager">管理应用</string>
-    <string name="setting_open_device_manager">打开设备管理器</string>
     <string name="setting_column_icons">每列图标</string>
     <string name="toast_need_wifi_connnect">大哥诶，麻烦先把WIFI连上吧</string>
     <string name="setting_row_icons">每行图标</string>
@@ -35,6 +34,7 @@
     <string name="battery_wtf" translatable="false">WTF?</string>
 
     <string name="dialog_cancel">取消</string>
+    <string name="dialog_rename">重命名</string>
     <string name="dialog_hide">隐藏</string>
     <string name="dialog_uninstall">卸载</string>
     <string name="dialog_pkg_name">包名: %s</string>
@@ -55,9 +55,6 @@
         <item>关机</item>
         <item>重启</item>
     </string-array>
-    <string name="setting_cloud_manager_on">网络传书 （开）</string>
-    <string name="setting_cloud_manager_off">网络传书 （关）</string>
-    <string name="setting_cloud_manager_wifi_off">网络传书 （请连接WIFI）</string>
     <string name="setting_help_and_about">帮助 &amp; 关于</string>
     <string name="path">路径</string>
     <string name="default_path_setting">设置默认路径</string>
@@ -70,8 +67,6 @@
     <string name="battery_status_low_battery">电量低</string>
     <string name="show_custom_icon">显示自定义图标</string>
     <string name="show_statusbar">显示状态栏</string>
-    <string name="show_wifi_name">显示WiFi名字</string>
-    <string name="notification_click_back_launcher">点击这里回到桌面</string>
     <string name="app_show_name">App 名字</string>
     <string name="setting_sort_mode">排序方式</string>
     <string name="sort_need_usage_permission">此排序模式需要授予使用情况访问权限</string>
@@ -80,6 +75,8 @@
     <string name="layout_lock_confirm_title">开启布局锁定</string>
     <string name="layout_lock_confirm_message">将固化当前图标顺序，新安装的应用只能追加到末尾；解锁前无法修改排序方式。是否继续？</string>
     <string name="layout_locked_toast">布局已锁定，请先解锁</string>
+    <string name="setting_layout_adjust">布局调整</string>
+    <string name="adjust_mode_hint">布局调整：长按选中应用，再点击另一应用交换位置；点击已选中的应用取消</string>
     <string name="dialog_ok">确定</string>
     <string name="launch_failed">启动失败</string>
     <string name="launch_devicemanager">打开设备管理器</string>

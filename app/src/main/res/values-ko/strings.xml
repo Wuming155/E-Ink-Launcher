@@ -12,6 +12,10 @@
     <string name="default_path_setting">기본 경로</string>
     <string name="delete">삭제</string>
     <string name="dialog_cancel">취소</string>
+    <string name="dialog_rename">이름 바꾸기</string>
+    <string name="dialog_ok">확인</string>
+    <string name="setting_layout_adjust">레이아웃 조정</string>
+    <string name="adjust_mode_hint">레이아웃 조정: 앱을 길게 눌러 선택한 뒤 다른 앱을 눌러 위치를 교환하고, 선택된 앱을 다시 누르면 취소됩니다.</string>
     <string name="dialog_close">닫기</string>
     <string name="dialog_confim">확인</string>
     <string name="dialog_hide">숨기기</string>
@@ -25,10 +29,6 @@
     <string name="path">경로</string>
     <string name="power_title">기기 종료</string>
     <string name="setting_apps_manager">앱 관리자</string>
-    <string name="setting_cloud_manager_off">클라우드 관리자 - 꺼짐</string>
-    <string name="setting_cloud_manager_on">클라우드 관리자 - 켜짐</string>
-    <string name="setting_cloud_manager_wifi_off">"클라우드 관리자
- &#8212; WiFi 연결 없음"</string>
     <string name="setting_column_icons">열</string>
     <string name="setting_help_and_about">도움말 &amp; 정보</string>
     <string name="setting_hide_divider">구분선 숨김</string>

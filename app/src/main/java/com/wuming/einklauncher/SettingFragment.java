@@ -1,17 +1,10 @@
 package com.wuming.einklauncher;
 
-import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Fragment;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -26,9 +19,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import com.wuming.einklauncher.ftpservice.FTPService;
 import com.wuming.einklauncher.model.AppSortComparator;
-import com.wuming.einklauncher.model.WifiControl;
 
 /**
  * 设置页面 Fragment。
@@ -47,6 +38,9 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     void onSortModeChanged(int mode);
     void onLayoutLockedChanged(boolean locked);
     void onEnterManageMode();
+    /** 切换布局调整模式（开启进入调整、再点退出） */
+    void onToggleLayoutAdjust();
+    boolean isLayoutAdjusting();
   }
 
   private OnSettingChangeListener listener;
@@ -58,12 +52,11 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   private SeekBar fontControl;
   private View rootView;
   private TextView hideDivider;
-  private TextView ftpAddr;
-  private TextView ftpStatus;
   private TextView showStatusBar;
   private TextView showCustomIcon;
   private TextView layoutLock;
   private TextView showLockHint;
+  private TextView layoutAdjust;
   private Config config;
 
   @SuppressWarnings("deprecation")
@@ -90,7 +83,6 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     initViews();
     initSpinners();
     initFontControl();
-    updateFtpStatus();
   }
 
   // =========================================================================
@@ -101,19 +93,16 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     rootView.findViewById(R.id.toBack).setOnClickListener(this);
     rootView.findViewById(R.id.rootView).setOnClickListener(this);
     rootView.findViewById(R.id.deleteApp).setOnClickListener(this);
-    rootView.findViewById(R.id.showWifiName).setOnClickListener(this);
     rootView.findViewById(R.id.btnHideFontControl).setOnClickListener(this);
     rootView.findViewById(R.id.changeFontSize).setOnClickListener(this);
     rootView.findViewById(R.id.helpAbout).setOnClickListener(this);
-    rootView.findViewById(R.id.menu_ftp).setOnClickListener(this);
-    rootView.findViewById(R.id.openDeviceManager).setOnClickListener(this);
+    rootView.findViewById(R.id.layoutAdjust).setOnClickListener(this);
 
     showStatusBar = rootView.findViewById(R.id.showStatusBar);
     showCustomIcon = rootView.findViewById(R.id.showCustomIcon);
     layoutLock = rootView.findViewById(R.id.layoutLock);
     showLockHint = rootView.findViewById(R.id.showLockHint);
-    ftpStatus = rootView.findViewById(R.id.ftp_status);
-    ftpAddr = rootView.findViewById(R.id.ftp_addr);
+    layoutAdjust = rootView.findViewById(R.id.layoutAdjust);
     hideDivider = rootView.findViewById(R.id.hideDivider);
     fontControl = rootView.findViewById(R.id.font_control);
     colNumSpinner = rootView.findViewById(R.id.col_num_spinner);
@@ -134,6 +123,8 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     showCustomIcon.getPaint().setStrikeThruText(config.isShowCustomIcon());
     layoutLock.getPaint().setStrikeThruText(config.isLayoutLocked());
     showLockHint.getPaint().setStrikeThruText(config.isShowLockHint());
+    // 布局调整是临时模式（非持久化配置），状态由宿主 Activity 提供
+    layoutAdjust.getPaint().setStrikeThruText(listener.isLayoutAdjusting());
     fontControl.setProgress((int) ((config.getFontSize() - 10) * 10));
   }
 
@@ -262,23 +253,25 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
       rootView.findViewById(R.id.font_control_p).setVisibility(View.VISIBLE);
     } else if (id == R.id.hideDivider) {
       handleToggleDivider();
-    } else if (id == R.id.menu_ftp) {
-      handleFtp();
-    } else if (id == R.id.showWifiName) {
-      handleShowWifiName();
     } else if (id == R.id.showCustomIcon) {
       handleToggleCustomIcon();
     } else if (id == R.id.layoutLock) {
       handleToggleLayoutLock();
     } else if (id == R.id.showLockHint) {
       handleToggleLockHint();
-    } else if (id == R.id.openDeviceManager) {
-      startActivity(new Intent().setComponent(
-          new ComponentName("com.android.settings", "com.android.settings.DeviceAdminSettings")));
+    } else if (id == R.id.layoutAdjust) {
+      handleLayoutAdjust();
     }
   }
 
   private void handleDeleteApp() {
+    if (config.isLayoutLocked()) {
+      // 布局锁定时关闭管理功能，避免取消隐藏/隐藏应用破坏锁定布局
+      if (config.isShowLockHint()) {
+        Toast.makeText(getActivity(), R.string.layout_locked_toast, Toast.LENGTH_SHORT).show();
+      }
+      return;
+    }
     listener.onEnterManageMode();
     getActivity().onBackPressed();
   }
@@ -296,29 +289,6 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     hideDivider.setText(newValue ? "显示分隔线" : "隐藏分隔线");
     listener.onHideDividerChanged(newValue);
     getActivity().onBackPressed();
-  }
-
-  private void handleFtp() {
-    Utils.checkStoragePermission(getActivity(), new Runnable() {
-      @Override
-      public void run() {
-        if (!FTPService.isRunning()) {
-          if (FTPService.isConnectedToWifi(getActivity())) {
-            startFtpServer();
-          } else {
-            Toast.makeText(getActivity(), "大哥诶，麻烦先把WIFI连上吧", Toast.LENGTH_SHORT).show();
-          }
-        } else {
-          stopFtpServer();
-        }
-      }
-    });
-  }
-
-  private void handleShowWifiName() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 10002);
-    }
   }
 
   private void handleToggleCustomIcon() {
@@ -363,102 +333,18 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     showLockHint.getPaint().setStrikeThruText(newValue);
   }
 
+  /** 切换布局调整模式并回到桌面：开启后长按/点击图标交换位置，桌面「完成」退出 */
+  private void handleLayoutAdjust() {
+    listener.onToggleLayoutAdjust();
+    layoutAdjust.getPaint().setStrikeThruText(listener.isLayoutAdjusting());
+    getActivity().onBackPressed();
+  }
+
   @Override
   public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    if (requestCode == 10002) {
-      WifiControl.reloadWifiName();
-      getActivity().onBackPressed();
+    if (requestCode == Utils.REQUEST_STORAGE_PERMISSION) {
+      Utils.onStoragePermissionResult(grantResults);
     }
   }
-
-  // =========================================================================
-  // 生命周期
-  // =========================================================================
-
-  @Override
-  public void onResume() {
-    super.onResume();
-    updateFtpStatus();
-
-    IntentFilter wifiFilter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-    Utils.registerReceiverCompat(getActivity(), wifiReceiver, wifiFilter);
-
-    IntentFilter ftpFilter = new IntentFilter();
-    ftpFilter.addAction(FTPService.ACTION_STARTED);
-    ftpFilter.addAction(FTPService.ACTION_STOPPED);
-    ftpFilter.addAction(FTPService.ACTION_FAILEDTOSTART);
-    Utils.registerReceiverCompat(getActivity(), ftpReceiver, ftpFilter);
-  }
-
-  @Override
-  public void onPause() {
-    super.onPause();
-    getActivity().unregisterReceiver(wifiReceiver);
-    getActivity().unregisterReceiver(ftpReceiver);
-  }
-
-  // =========================================================================
-  // FTP 控制
-  // =========================================================================
-
-  private void startFtpServer() {
-    getActivity().sendBroadcast(new Intent(FTPService.ACTION_START_FTPSERVER));
-  }
-
-  private void stopFtpServer() {
-    getActivity().sendBroadcast(new Intent(FTPService.ACTION_STOP_FTPSERVER));
-  }
-
-  private void updateFtpStatus() {
-    if (FTPService.isConnectedToWifi(getActivity())) {
-      if (FTPService.isRunning()) {
-        ftpStatus.setText(R.string.setting_cloud_manager_on);
-        ftpAddr.setVisibility(View.VISIBLE);
-        String address = getFTPAddressString();
-        if (address != null) {
-          ftpAddr.setText(address);
-        } else {
-          ftpAddr.setVisibility(View.GONE);
-        }
-      } else {
-        ftpStatus.setText(R.string.setting_cloud_manager_off);
-        ftpAddr.setVisibility(View.GONE);
-      }
-    } else {
-      ftpStatus.setText(R.string.setting_cloud_manager_wifi_off);
-      ftpAddr.setVisibility(View.GONE);
-    }
-  }
-
-  private String getFTPAddressString() {
-    if (FTPService.getLocalInetAddress(getActivity()) == null) {
-      return null;
-    }
-    return "ftp://" + FTPService.getLocalInetAddress(getActivity()).getHostAddress()
-        + ":" + FTPService.getPort();
-  }
-
-  // =========================================================================
-  // 广播接收器
-  // =========================================================================
-
-  private final BroadcastReceiver wifiReceiver = new BroadcastReceiver() {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      ConnectivityManager conMan = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-      NetworkInfo netInfo = conMan.getActiveNetworkInfo();
-      if (netInfo == null || netInfo.getType() != ConnectivityManager.TYPE_WIFI) {
-        stopFtpServer();
-      }
-      updateFtpStatus();
-    }
-  };
-
-  private final BroadcastReceiver ftpReceiver = new BroadcastReceiver() {
-    @Override
-    public void onReceive(Context context, Intent intent) {
-      updateFtpStatus();
-    }
-  };
 }

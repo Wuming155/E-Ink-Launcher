@@ -2,6 +2,7 @@ package com.wuming.einklauncher;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
@@ -25,31 +26,38 @@ public class AboutDialog {
     root.setPadding(padding, padding, padding, padding);
     root.setOrientation(LinearLayout.VERTICAL);
     root.setBackgroundColor(0xffffffff);
+
     TextView appName = new TextView(context);
     appName.setText("E-Ink Launcher");
     appName.setTextSize(30);
     root.addView(appName);
+
+    TextView versionView = new TextView(context);
+    versionView.setText(getVersionName());
+    versionView.setTextSize(14);
+    versionView.setPadding(0, Utils.dp2Px(context, 10), 0, Utils.dp2Px(context, 10));
+    root.addView(versionView);
+
     View line = new View(context);
     line.setBackgroundColor(0xff000000);
     root.addView(line, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Utils.dp2Px(context, 1)));
 
     TextView thanksView = new TextView(context);
-    thanksView.setText("Thanks:\nMaciej Haudek <kontakt@haudek.com>");
-    thanksView.setTextSize(15);
-    thanksView.setPadding(0, Utils.dp2Px(context, 10), 0, Utils.dp2Px(context, 10));
+    thanksView.setText("Thanks:\nMaciej Haudek");
+    thanksView.setTextSize(14);
+    thanksView.setPadding(0, Utils.dp2Px(context, 10), 0, 0);
     root.addView(thanksView);
 
-    line = new View(context);
-    line.setBackgroundColor(0xff000000);
-    root.addView(line, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Utils.dp2Px(context, 1)));
-
-    TextView launcherInfo = new TextView(context);
-    launcherInfo.setText("主要功能：\n1.显示 App\n2.App 展示密度调整\n3.App 名称字体大小调整\n4.卸载/隐藏 App\n5.一键锁屏\n6.一键开关 WIFI\n7.自定义图标：长按图标会出现包名，把图标重命名成「包名+文件后缀」，\n   连接电脑放到 Documents/E-Ink Launcher/icon 下即可\nPS：图标长按有惊喜");
-    launcherInfo.setTextColor(0xff000000);
-    launcherInfo.setTextSize(14);
-    root.addView(launcherInfo);
-
     return root;
+  }
+
+  private String getVersionName() {
+    try {
+      return context.getPackageManager()
+          .getPackageInfo(context.getPackageName(), 0).versionName;
+    } catch (PackageManager.NameNotFoundException e) {
+      return "";
+    }
   }
 
   public void show() {

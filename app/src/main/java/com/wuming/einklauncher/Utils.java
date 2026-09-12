@@ -20,6 +20,9 @@ import java.util.Calendar;
  */
 public class Utils {
 
+  /** 存储权限申请的请求码 */
+  public static final int REQUEST_STORAGE_PERMISSION = 10003;
+
   private static final String[] SIZE_UNITS = {"bytes", "KB", "MB", "GB", "TB"};
   private static final DecimalFormat SIZE_FORMAT = new DecimalFormat("####.00");
   private static final double SIZE_THRESHOLD = 0.8;
@@ -27,6 +30,9 @@ public class Utils {
   private static final String[] CN_AM_PM = {
       "凌晨", "黎明", "早晨", "上午", "中午", "下午", "晚上", "深夜"
   };
+
+  /** 存储权限授权后待执行的操作 */
+  private static Runnable pendingStorageAction;
 
   private Utils() {
     // 工具类不可实例化
@@ -98,7 +104,8 @@ public class Utils {
   }
 
   /**
-   * 检查存储权限，权限已授予则执行 next。
+   * 检查存储权限，已授予则直接执行 next；
+   * 未授予时先保存 next，授权结果通过 {@link #onStoragePermissionResult} 继续执行。
    */
   public static void checkStoragePermission(Activity activity, Runnable next) {
     String[] permissions = {
@@ -107,9 +114,23 @@ public class Utils {
     };
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
         && activity.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-        == PackageManager.PERMISSION_DENIED) {
-      activity.requestPermissions(permissions, 10003);
+            == PackageManager.PERMISSION_DENIED) {
+      pendingStorageAction = next;
+      activity.requestPermissions(permissions, REQUEST_STORAGE_PERMISSION);
     } else if (next != null) {
+      next.run();
+    }
+  }
+
+  /**
+   * 存储权限申请结果处理：由持有 {@link #REQUEST_STORAGE_PERMISSION} 请求码的
+   * {@code onRequestPermissionsResult} 调用，权限授予时继续执行挂起的操作。
+   */
+  public static void onStoragePermissionResult(int[] grantResults) {
+    Runnable next = pendingStorageAction;
+    pendingStorageAction = null;
+    if (next == null) return;
+    if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
       next.run();
     }
   }

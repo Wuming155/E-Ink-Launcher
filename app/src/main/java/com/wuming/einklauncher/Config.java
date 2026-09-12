@@ -4,8 +4,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -28,9 +30,14 @@ public class Config {
   public static final String KEY_LAYOUT_LOCKED = "launcherLayoutLocked";
   public static final String KEY_SHOW_LOCK_HINT = "launcherShowLockHint";
   public static final String KEY_CUSTOM_ORDER = "launcherCustomOrder";
+  public static final String KEY_CUSTOM_LABELS = "launcherCustomLabels";
 
   /** 自定义顺序的分隔符（包名不含换行符，可安全用作分隔符） */
   private static final String ORDER_SEPARATOR = "\n";
+
+  /** 自定义名称条目分隔符与包名/名称间的分隔符（名称中的换行会被替换，包名不含控制字符） */
+  private static final String LABEL_ENTRY_SEPARATOR = "\n";
+  private static final String LABEL_KV_SEPARATOR = "\u0001";
 
   // ---- 默认值 ----
   private static final int DEFAULT_COL_NUM = 5;
@@ -60,6 +67,7 @@ public class Config {
   private boolean layoutLocked;
   private boolean showLockHint;
   private List<String> customOrder;
+  private Map<String, String> customLabels;
   private final Set<String> hideApps = new HashSet<>();
   private boolean hideAppsLoaded = false;
 
@@ -260,5 +268,52 @@ public class Config {
       sb.append(customOrder.get(i));
     }
     prefs.edit().putString(KEY_CUSTOM_ORDER, sb.toString()).apply();
+  }
+
+  // ---- 自定义应用名称 ----
+
+  /** 获取自定义名称映射（包名 → 名称），未设置时返回空 Map */
+  public Map<String, String> getCustomLabels() {
+    if (customLabels == null) {
+      customLabels = new HashMap<>();
+      String raw = prefs.getString(KEY_CUSTOM_LABELS, "");
+      if (raw != null && !raw.isEmpty()) {
+        for (String entry : raw.split(LABEL_ENTRY_SEPARATOR)) {
+          int sep = entry.indexOf(LABEL_KV_SEPARATOR);
+          if (sep > 0) {
+            customLabels.put(entry.substring(0, sep), entry.substring(sep + 1));
+          }
+        }
+      }
+    }
+    return customLabels;
+  }
+
+  /** 获取指定包名的自定义名称，未设置时返回 null */
+  public String getCustomLabel(String packageName) {
+    return getCustomLabels().get(packageName);
+  }
+
+  /**
+   * 设置应用的自定义名称，空名称表示清除、恢复显示原始名称。
+   */
+  public void setCustomLabel(String packageName, String label) {
+    Map<String, String> labels = getCustomLabels();
+    if (label == null || label.trim().isEmpty()) {
+      if (labels.remove(packageName) == null) {
+        return;
+      }
+    } else {
+      // 条目按换行分隔，名称中的换行会破坏解析，统一替换为空格
+      labels.put(packageName, label.trim().replace(LABEL_ENTRY_SEPARATOR, " "));
+    }
+    StringBuilder sb = new StringBuilder();
+    for (Map.Entry<String, String> entry : labels.entrySet()) {
+      if (sb.length() > 0) {
+        sb.append(LABEL_ENTRY_SEPARATOR);
+      }
+      sb.append(entry.getKey()).append(LABEL_KV_SEPARATOR).append(entry.getValue());
+    }
+    prefs.edit().putString(KEY_CUSTOM_LABELS, sb.toString()).apply();
   }
 }

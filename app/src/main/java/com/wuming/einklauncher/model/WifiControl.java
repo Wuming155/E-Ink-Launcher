@@ -72,18 +72,6 @@ public class WifiControl {
     instance.updateStatus();
   }
 
-  public static void reloadWifiName() {
-    if (instance.showNameRes == R.string.wifi_status_connected
-        && instance.connectWifiName != null
-        && instance.connectWifiName.contains("unknown ssid")) {
-      instance.connectWifiName = instance.wifiManager.getConnectionInfo().getSSID().replace("\"", "");
-      if (!TextUtils.isEmpty(instance.connectWifiName)) {
-        instance.connectWifiName = "\n" + instance.connectWifiName;
-      }
-      instance.updateStatus();
-    }
-  }
-
   private void updateStatus() {
     if (appName == null) return;
 

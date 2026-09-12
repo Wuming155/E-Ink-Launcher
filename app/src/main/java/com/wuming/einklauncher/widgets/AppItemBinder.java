@@ -58,6 +58,13 @@ public class AppItemBinder {
   private IconCache iconCache;
   private boolean isDelete = false;
 
+  // 布局调整模式：isAdjust 时点击/长按用于选中并交换位置，selectedPkg 为当前选中的包名
+  private boolean isAdjust = false;
+  private String selectedPkg;
+
+  // 自定义名称映射（包名 → 名称），由宿主传入
+  private Map<String, String> customLabels;
+
   // 当前绑定的数据（由 Adapter 在 bindAll 时传入）
   private List<ResolveInfo> dataRef;
 
@@ -81,6 +88,10 @@ public class AppItemBinder {
     this.iconCache = iconCache;
   }
 
+  public void setCustomLabels(Map<String, String> labels) {
+    this.customLabels = labels;
+  }
+
   // =========================================================================
   // 管理模式
   // =========================================================================
@@ -91,6 +102,18 @@ public class AppItemBinder {
 
   public boolean isDelete() {
     return isDelete;
+  }
+
+  public void setAdjust(boolean adjust) {
+    this.isAdjust = adjust;
+  }
+
+  public boolean isAdjust() {
+    return isAdjust;
+  }
+
+  public void setSelectedPkg(String pkg) {
+    this.selectedPkg = pkg;
   }
 
   // =========================================================================
@@ -178,9 +201,12 @@ public class AppItemBinder {
       holder.appName.setText(R.string.item_lockscreen);
     } else {
       loadIcon(holder.appImage, pkg, info, customIcons);
-      holder.appName.setText(iconCache != null
-          ? iconCache.getLabel(pkg, info, packageManager)
-          : info.loadLabel(packageManager));
+      String label = customLabels != null ? customLabels.get(pkg) : null;
+      holder.appName.setText(label != null && !label.isEmpty()
+          ? label
+          : (iconCache != null
+              ? iconCache.getLabel(pkg, info, packageManager)
+              : info.loadLabel(packageManager)));
     }
 
     // —— 监听器（通过 tag 传递 position，复用单例监听器） ——
@@ -193,7 +219,7 @@ public class AppItemBinder {
     holder.menuHide.setOnClickListener(hideClickListener);
 
     holder.itemView.setVisibility(View.VISIBLE);
-    holder.itemView.setAlpha(1);
+    holder.itemView.setAlpha(isAdjust && pkg.equals(selectedPkg) ? 0.4f : 1f);
   }
 
   private void clearItem(LauncherAdapter.ItemViewHolder holder) {
@@ -203,6 +229,7 @@ public class AppItemBinder {
     holder.itemView.setOnLongClickListener(null);
     holder.menuDelete.setOnClickListener(null);
     holder.menuHide.setOnClickListener(null);
+    holder.menuContainer.setVisibility(View.GONE);
     holder.itemView.setAlpha(0);
   }
 

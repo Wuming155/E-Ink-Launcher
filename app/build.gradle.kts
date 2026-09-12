@@ -56,11 +56,6 @@ android {
     buildFeatures {
         buildConfig = true
     }
-    packaging {
-        resources {
-            excludes += setOf("META-INF/DEPENDENCIES", "META-INF/LICENSE", "META-INF/LICENSE.txt", "META-INF/license.txt")
-        }
-    }
     lint {
         baseline = file("lint-baseline.xml")
     }
@@ -68,6 +63,4 @@ android {
 
 dependencies {
     implementation(libs.androidx.core)
-    implementation(libs.apache.ftplet.api)
-    implementation(libs.apache.ftpserver.core)
 }

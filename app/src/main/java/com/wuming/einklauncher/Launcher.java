@@ -16,16 +16,16 @@ import android.content.pm.ResolveInfo;
 import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.BatteryManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
-import android.text.TextUtils;
 import android.text.format.DateFormat;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -33,11 +33,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-import com.wuming.einklauncher.ftpservice.FTPReceiver;
-import com.wuming.einklauncher.ftpservice.FTPService;
 import com.wuming.einklauncher.model.AdminReceiver;
 import com.wuming.einklauncher.model.AppDataCenter;
-import com.wuming.einklauncher.model.HomeEntranceService;
 import com.wuming.einklauncher.model.IconCache;
 import com.wuming.einklauncher.model.WifiControl;
 import com.wuming.einklauncher.widgets.AppItemBinder;
@@ -70,16 +67,16 @@ public class Launcher extends Activity
   private LauncherAdapter adapter;
   private AppItemBinder binder;
   private boolean isSystemApp = false;
+  /** 布局调整模式下当前选中的应用包名 */
+  private String adjustSelectedPkg;
 
   // ---- Device Admin ----
   private DevicePolicyManager policyManager;
 
   // ---- Receivers ----
-  private FTPReceiver ftpReceiver = new FTPReceiver();
   private boolean batteryRegistered;
   private boolean timeRegistered;
   private boolean usbRegistered;
-  private boolean ftpRegistered;
 
   private final BroadcastReceiver timeReceiver = new BroadcastReceiver() {
     @Override
@@ -131,7 +128,6 @@ public class Launcher extends Activity
 
     initViews();
     registerStaticReceivers();
-    checkLaunchHomeNotification();
   }
 
   @Override
@@ -178,6 +174,7 @@ public class Launcher extends Activity
     binder.setCallback(this);
     binder.setIconCache(iconCache);
     binder.setHideAppPkg(config.getHideApps());
+    binder.setCustomLabels(config.getCustomLabels());
     adapter = new LauncherAdapter();
     adapter.setBinder(binder);
     adapter.setFontSize(config.getFontSize());
@@ -223,13 +220,17 @@ public class Launcher extends Activity
       }
     });
 
-    // 管理完成按钮
+    // 完成 / 退出按钮（管理模式与布局调整模式共用）
     findViewById(R.id.deleteFinish).setOnClickListener(new View.OnClickListener() {
       @Override
       public void onClick(View v) {
-        binder.setDelete(false);
-        dataCenter.refreshAppList();
-        config.setHideApps(dataCenter.getHideApps());
+        if (binder.isAdjust()) {
+          exitLayoutAdjust();
+        } else {
+          binder.setDelete(false);
+          dataCenter.refreshAppList();
+          config.setHideApps(dataCenter.getHideApps());
+        }
         v.setVisibility(View.GONE);
       }
     });
@@ -338,6 +339,11 @@ public class Launcher extends Activity
 
   @Override
   public void onItemClick(ResolveInfo info) {
+    if (binder.isAdjust()) {
+      handleAdjustSelect(info);
+      return;
+    }
+
     String pkgName = info.activityInfo.packageName;
 
     if (AppDataCenter.LOCK_PACKAGE_NAME.equals(pkgName)) {
@@ -358,10 +364,17 @@ public class Launcher extends Activity
   public void onItemLongClick(View anchor, ResolveInfo info) {
     String packageName = info.activityInfo.packageName;
 
-    if (AppDataCenter.LOCK_PACKAGE_NAME.equals(packageName)) {
+    if (binder.isAdjust()) {
+      handleAdjustSelect(info);
+    } else if (AppDataCenter.LOCK_PACKAGE_NAME.equals(packageName)) {
       showPowerMenu();
     } else if (AppDataCenter.WIFI_PACKAGE_NAME.equals(packageName)) {
       WifiControl.onLongClickWifiItem();
+    } else if (config.isLayoutLocked()) {
+      // 布局锁定时关闭管理功能（隐藏/卸载），避免破坏锁定布局
+      if (config.isShowLockHint()) {
+        Toast.makeText(this, R.string.layout_locked_toast, Toast.LENGTH_SHORT).show();
+      }
     } else {
       showAppInfoDialog(info, packageName);
     }
@@ -377,6 +390,71 @@ public class Launcher extends Activity
   @Override
   public void onItemHideToggle(String packageName, boolean hidden) {
     // 管理模式下的隐藏切换仅更新 UI 状态，"完成" 按钮处理持久化
+  }
+
+  // =========================================================================
+  // 布局调整模式（交换图标位置）
+  // =========================================================================
+
+  /** 选中应用：首次选中高亮，点同一个取消，点另一个交换位置 */
+  private void handleAdjustSelect(ResolveInfo info) {
+    String pkg = info.activityInfo.packageName;
+    if (adjustSelectedPkg == null) {
+      adjustSelectedPkg = pkg;
+      binder.setSelectedPkg(pkg);
+      adapter.refreshDisplay();
+    } else if (adjustSelectedPkg.equals(pkg)) {
+      adjustSelectedPkg = null;
+      binder.setSelectedPkg(null);
+      adapter.refreshDisplay();
+    } else if (dataCenter.swapApps(adjustSelectedPkg, pkg)) {
+      adjustSelectedPkg = null;
+      binder.setSelectedPkg(null);
+      config.setCustomOrder(dataCenter.getAppOrder());
+      // swapApps 内部已重新分页绑定
+    }
+  }
+
+  private void enterLayoutAdjust() {
+    // 与管理模式互斥
+    if (binder.isDelete()) {
+      binder.setDelete(false);
+    }
+    // 以当前显示顺序为调整基准，调整期间临时走自定义排序
+    config.setCustomOrder(dataCenter.getAppOrder());
+    dataCenter.setCustomOrder(config.getCustomOrder());
+    adjustSelectedPkg = null;
+    binder.setSelectedPkg(null);
+    binder.setAdjust(true);
+    dataCenter.setLayoutAdjusting(true);
+    dataCenter.refreshAppList();
+    findViewById(R.id.deleteFinish).setVisibility(View.VISIBLE);
+    Toast.makeText(this, R.string.adjust_mode_hint, Toast.LENGTH_LONG).show();
+  }
+
+  private void exitLayoutAdjust() {
+    adjustSelectedPkg = null;
+    binder.setSelectedPkg(null);
+    binder.setAdjust(false);
+    dataCenter.setLayoutAdjusting(false);
+    // 固化调整结果；未锁定布局时后续列表刷新会按排序方式重排，
+    // 锁定布局后始终按此自定义顺序显示
+    config.setCustomOrder(dataCenter.getAppOrder());
+  }
+
+  @Override
+  public void onToggleLayoutAdjust() {
+    if (binder.isAdjust()) {
+      exitLayoutAdjust();
+      findViewById(R.id.deleteFinish).setVisibility(View.GONE);
+    } else {
+      enterLayoutAdjust();
+    }
+  }
+
+  @Override
+  public boolean isLayoutAdjusting() {
+    return binder.isAdjust();
   }
 
   // =========================================================================
@@ -416,11 +494,20 @@ public class Launcher extends Activity
   }
 
   private void showAppInfoDialog(ResolveInfo info, final String packageName) {
+    String customLabel = config.getCustomLabel(packageName);
+    CharSequence displayLabel = customLabel != null && !customLabel.isEmpty()
+        ? customLabel
+        : iconCache.getLabel(packageName, info, getPackageManager());
     new AlertDialog.Builder(this)
         .setIcon(iconCache.getIcon(packageName, info, getPackageManager()))
-        .setTitle(iconCache.getLabel(packageName, info, getPackageManager()))
+        .setTitle(displayLabel)
         .setMessage(getString(R.string.dialog_pkg_name, packageName))
-        .setPositiveButton(R.string.dialog_cancel, null)
+        .setPositiveButton(R.string.dialog_rename, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            showRenameDialog(info, packageName);
+          }
+        })
         .setNeutralButton(R.string.dialog_hide, new DialogInterface.OnClickListener() {
           @Override
           public void onClick(DialogInterface dialog, int which) {
@@ -439,6 +526,33 @@ public class Launcher extends Activity
             startActivity(deleteIntent);
           }
         })
+        .show();
+  }
+
+  /**
+   * 重命名应用：预填当前显示名称，输入为空时恢复原始名称。
+   */
+  private void showRenameDialog(final ResolveInfo info, final String packageName) {
+    String customLabel = config.getCustomLabel(packageName);
+    CharSequence current = customLabel != null && !customLabel.isEmpty()
+        ? customLabel
+        : iconCache.getLabel(packageName, info, getPackageManager());
+
+    final EditText input = new EditText(this);
+    input.setText(current);
+    input.setSelection(input.getText().length());
+
+    new AlertDialog.Builder(this)
+        .setTitle(R.string.dialog_rename)
+        .setView(input)
+        .setPositiveButton(R.string.dialog_ok, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            config.setCustomLabel(packageName, input.getText().toString());
+            adapter.refreshDisplay();
+          }
+        })
+        .setNegativeButton(R.string.dialog_cancel, null)
         .show();
   }
 
@@ -537,12 +651,6 @@ public class Launcher extends Activity
     if (!usbRegistered) {
       registerUsbReceiver();
     }
-    if (!ftpRegistered) {
-      IntentFilter ftpFilter = new IntentFilter(FTPService.ACTION_START_FTPSERVER);
-      ftpFilter.addAction(FTPService.ACTION_STOP_FTPSERVER);
-      registerCompatReceiver(ftpReceiver, ftpFilter);
-      ftpRegistered = true;
-    }
   }
 
   private void unregisterDynamicReceivers() {
@@ -557,10 +665,6 @@ public class Launcher extends Activity
     if (usbRegistered) {
       unregisterReceiver(usbReceiver);
       usbRegistered = false;
-    }
-    if (ftpRegistered) {
-      unregisterReceiver(ftpReceiver);
-      ftpRegistered = false;
     }
   }
 
@@ -592,6 +696,10 @@ public class Launcher extends Activity
       dataCenter.showNextPage();
       return true;
     } else if (keyCode == KeyEvent.KEYCODE_BACK) {
+      // 设置页打开时交给系统处理返回（触发 onBackPressed），桌面本身消费掉 BACK
+      if (getFragmentManager().getBackStackEntryCount() > 0) {
+        return super.onKeyUp(keyCode, event);
+      }
       return true;
     }
     return super.onKeyUp(keyCode, event);
@@ -681,15 +789,5 @@ public class Launcher extends Activity
 
   public boolean isUserApp(PackageInfo pInfo) {
     return (pInfo.applicationInfo.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) == 0;
-  }
-
-  private void checkLaunchHomeNotification() {
-    if (!TextUtils.equals(Build.DEVICE, "virgo-perf1")) return;
-    Intent service = new Intent(this, HomeEntranceService.class);
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      startForegroundService(service);
-    } else {
-      startService(service);
-    }
   }
 }

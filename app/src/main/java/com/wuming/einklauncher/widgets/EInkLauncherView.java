@@ -3,6 +3,7 @@ package com.wuming.einklauncher.widgets;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.ViewGroup;
 
 import com.wuming.einklauncher.R;
@@ -150,6 +151,8 @@ public class EInkLauncherView extends ViewGroup {
             (col + 1) * cellW, (row + 1) * cellH);
       }
     }
+
+    applyLabelBounds(cellH);
   }
 
   @Override
@@ -172,6 +175,20 @@ public class EInkLauncherView extends ViewGroup {
 
   private int getAdjustedHeight() {
     return getHeight() - getPaddingTop() - getPaddingBottom();
+  }
+
+  /**
+   * 限制应用名可用高度：单元格高度减去图标区高度。
+   * 由 Adapter 按当前字号换算可容纳的行数，超出部分省略号截断，
+   * 避免大字号下文字溢出固定单元格、遮挡相邻图标或自身被裁剪。
+   */
+  private void applyLabelBounds(int cellH) {
+    if (adapter == null || adapter.getHolderCount() == 0) return;
+    LauncherAdapter.ItemViewHolder first = adapter.getHolders().get(0);
+    int available = cellH - ((View) first.appImage.getParent()).getMeasuredHeight();
+    if (available > 0) {
+      adapter.applyLabelBounds(available);
+    }
   }
 
   // =========================================================================

@@ -1,11 +1,16 @@
 package com.wuming.einklauncher.widgets;
 
+import android.graphics.Paint;
+import android.text.Layout;
+import android.text.StaticLayout;
+import android.text.TextPaint;
 import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -105,6 +110,43 @@ public class LauncherAdapter {
     this.appNameLines = lines;
     for (ItemViewHolder holder : holders) {
       holder.appName.setMinLines(lines == 2 ? lines : 0);
+      holder.appName.setMaxLines(lines);
+    }
+  }
+
+  /**
+   * 统一本页所有应用名的行数。取「用户设置行数、可用高度按当前字号能容纳的行数、
+   * 本页最长名称所需行数」三者的最小值，并对所有格子强制相同的
+   * minLines/maxLines——每格内容总高一致，同一行图标保持水平对齐，
+   * 名称在图标下方换行且不会溢出固定单元格遮挡相邻图标。
+   * <p>
+   * 由 {@link EInkLauncherView} 在每次布局时调用
+   * （availableHeight = 单元格高 − 图标区高）。
+   */
+  void applyLabelBounds(int availableHeight) {
+    if (holders.isEmpty()) return;
+    TextView sample = holders.get(0).appName;
+    Paint.FontMetrics fm = sample.getPaint().getFontMetrics();
+    int lineHeight = (int) Math.ceil(fm.bottom - fm.top);
+    if (lineHeight <= 0 || availableHeight <= 0) return;
+    int fitLines = Math.max(1, availableHeight / lineHeight);
+
+    // 本页最长名称按当前字号与标签宽度排出来需要多少行
+    int neededLines = 1;
+    int width = sample.getWidth();
+    TextPaint paint = sample.getPaint();
+    for (int i = 0; i < holders.size() && i < dataList.size(); i++) {
+      CharSequence text = holders.get(i).appName.getText();
+      if (text == null || text.length() == 0) continue;
+      StaticLayout layout = new StaticLayout(text, paint,
+          width > 0 ? width : fitLines * lineHeight,
+          Layout.Alignment.ALIGN_CENTER, 1f, 0f, true);
+      neededLines = Math.max(neededLines, layout.getLineCount());
+    }
+
+    int lines = Math.min(appNameLines, Math.min(fitLines, neededLines));
+    for (ItemViewHolder holder : holders) {
+      holder.appName.setMinLines(lines);
       holder.appName.setMaxLines(lines);
     }
   }

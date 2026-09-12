@@ -38,6 +38,8 @@ public class AppDataCenter {
   private final Set<String> hideApps = new HashSet<>();
   private int sortMode = AppSortComparator.SORT_NAME_ASC;
   private boolean layoutLocked = false;
+  /** 布局调整模式：临时按自定义顺序排列，允许交换图标位置 */
+  private boolean layoutAdjusting = false;
   private final List<String> customOrder = new ArrayList<>();
 
   public AppDataCenter(Context context) {
@@ -139,6 +141,44 @@ public class AppDataCenter {
   }
 
   // =========================================================================
+  // 布局调整（交换图标位置）
+  // =========================================================================
+
+  /** 设置布局调整状态：调整期间临时按自定义顺序排列 */
+  public void setLayoutAdjusting(boolean adjusting) {
+    this.layoutAdjusting = adjusting;
+  }
+
+  public boolean isLayoutAdjusting() {
+    return layoutAdjusting;
+  }
+
+  /**
+   * 交换两个应用在当前列表中的位置（按包名查找，含虚拟图标）。
+   * 交换成功后同步刷新自定义顺序并重新分页显示。
+   *
+   * @return 是否交换成功
+   */
+  public boolean swapApps(String pkgA, String pkgB) {
+    if (pkgA == null || pkgB == null || pkgA.equals(pkgB)) return false;
+    int indexA = -1;
+    int indexB = -1;
+    for (int i = 0; i < mApps.size(); i++) {
+      String pkg = mApps.get(i).activityInfo.packageName;
+      if (pkgA.equals(pkg)) indexA = i;
+      else if (pkgB.equals(pkg)) indexB = i;
+    }
+    if (indexA < 0 || indexB < 0) return false;
+
+    Collections.swap(mApps, indexA, indexB);
+    // 以交换后的顺序刷新自定义顺序，保证调整期间及锁定布局后顺序稳定
+    customOrder.clear();
+    customOrder.addAll(getAppOrder());
+    setPageShow();
+    return true;
+  }
+
+  // =========================================================================
   // 翻页
   // =========================================================================
 
@@ -233,7 +273,8 @@ public class AppDataCenter {
   }
 
   private void sortApps() {
-    int mode = layoutLocked ? AppSortComparator.SORT_CUSTOM : sortMode;
+    int mode = (layoutLocked || layoutAdjusting)
+        ? AppSortComparator.SORT_CUSTOM : sortMode;
     Collections.sort(mApps,
         new AppSortComparator(mContext, mContext.getPackageManager(), mode, customOrder));
   }
