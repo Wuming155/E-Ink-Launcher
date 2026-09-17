@@ -49,7 +49,8 @@ public class CrashDetailPage extends Activity {
     root.addView(scrollView, new LinearLayout.LayoutParams(-1, -1, 1));
 
     btnReLaunch = new TextView(this);
-    btnReLaunch.setText("Restart Launcher");
+    btnReLaunch.setText(R.string.restart_launcher);
+    btnReLaunch.setFocusable(true);
     btnReLaunch.setTextColor(Color.BLACK);
     btnReLaunch.setGravity(Gravity.CENTER);
 

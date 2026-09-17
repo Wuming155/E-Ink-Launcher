@@ -1,5 +1,7 @@
 package com.wuming.einklauncher;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.admin.DevicePolicyManager;
@@ -16,6 +18,7 @@ import android.content.pm.ResolveInfo;
 import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.text.format.DateFormat;
@@ -50,11 +53,13 @@ public class Launcher extends Activity
     SettingFragment.OnSettingChangeListener {
 
   private static final int REQUEST_DEVICE_ADMIN = 10001;
+  private Runnable unregisterBackCallback;
 
   // ---- Views ----
   private EInkLauncherView launcherView;
   private TextView pageStatus;
   private BatteryView batteryProgress;
+  private TextView batteryPercent;
   private TextView batteryStatus;
   private TextView textClock;
 
@@ -128,6 +133,9 @@ public class Launcher extends Activity
 
     initViews();
     registerStaticReceivers();
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      unregisterBackCallback = Api33Back.register(this);
+    }
   }
 
   @Override
@@ -145,6 +153,10 @@ public class Launcher extends Activity
 
   @Override
   protected void onDestroy() {
+    if (unregisterBackCallback != null) {
+      unregisterBackCallback.run();
+      unregisterBackCallback = null;
+    }
     super.onDestroy();
     unregisterDynamicReceivers();
     unregisterReceiver(appChangeReceiver);
@@ -160,6 +172,7 @@ public class Launcher extends Activity
     launcherView = findViewById(R.id.mList);
     pageStatus = findViewById(R.id.pageStatus);
     batteryProgress = findViewById(R.id.batteryProgress);
+    batteryPercent = findViewById(R.id.batteryPercent);
     batteryStatus = findViewById(R.id.batteryStatus);
     textClock = findViewById(R.id.textClock);
 
@@ -179,6 +192,8 @@ public class Launcher extends Activity
     adapter.setBinder(binder);
     adapter.setFontSize(config.getFontSize());
     adapter.setAppNameLines(config.getAppNameLines());
+    adapter.setTextBold(config.isTextBold());
+    applyTextBold(config.isTextBold());
     launcherView.setAdapter(adapter);
     launcherView.setOnPageChangeListener(this);
 
@@ -321,6 +336,32 @@ public class Launcher extends Activity
       dataCenter.setLayoutLocked(false);
     }
     dataCenter.refreshAppList();
+  }
+
+  @Override
+  public void onTextBoldChanged(boolean bold) {
+    adapter.setTextBold(bold);
+    applyTextBold(bold);
+    adapter.refreshDisplay();
+  }
+
+  private void applyTextBold(boolean bold) {
+    if (pageStatus != null) {
+      pageStatus.getPaint().setFakeBoldText(bold);
+      pageStatus.invalidate();
+    }
+    if (textClock != null) {
+      textClock.getPaint().setFakeBoldText(bold);
+      textClock.invalidate();
+    }
+    if (batteryPercent != null) {
+      batteryPercent.getPaint().setFakeBoldText(bold);
+      batteryPercent.invalidate();
+    }
+    if (batteryStatus != null) {
+      batteryStatus.getPaint().setFakeBoldText(bold);
+      batteryStatus.invalidate();
+    }
   }
 
   // =========================================================================
@@ -591,6 +632,9 @@ public class Launcher extends Activity
 
     int level = (rawLevel >= 0 && scale > 0) ? (rawLevel * 100) / scale : -1;
     batteryProgress.setProgress(level);
+    if (batteryPercent != null) {
+      batteryPercent.setText(level >= 0 ? level + "%" : "--%");
+    }
     batteryStatus.setVisibility(View.VISIBLE);
 
     if (BatteryManager.BATTERY_HEALTH_OVERHEAT == health) {
@@ -695,29 +739,31 @@ public class Launcher extends Activity
     } else if (keyCode == KeyEvent.KEYCODE_PAGE_DOWN) {
       dataCenter.showNextPage();
       return true;
-    } else if (keyCode == KeyEvent.KEYCODE_BACK) {
-      // 设置页打开时交给系统处理返回（触发 onBackPressed），桌面本身消费掉 BACK
-      if (getFragmentManager().getBackStackEntryCount() > 0) {
-        return super.onKeyUp(keyCode, event);
-      }
-      return true;
     }
     return super.onKeyUp(keyCode, event);
   }
 
+  @SuppressLint("GestureBackNavigation")
   @Override
-  public boolean onKeyDown(int keyCode, KeyEvent event) {
-    if (keyCode == KeyEvent.KEYCODE_BACK && getFragmentManager().getBackStackEntryCount() == 0) {
-      return true;
-    }
-    return super.onKeyDown(keyCode, event);
+  public void onBackPressed() {
+    onBackRequested();
   }
 
   @Override
-  public void onBackPressed() {
-    if (getFragmentManager().getBackStackEntryCount() > 0) {
-      super.onBackPressed();
+  public void onBackRequested() {
+    if (getFragmentManager().popBackStackImmediate()) {
       config.setFontSize(config.getFontSize());
+    }
+  }
+
+  @androidx.annotation.RequiresApi(Build.VERSION_CODES.TIRAMISU)
+  private static final class Api33Back {
+    static Runnable register(Launcher activity) {
+      android.window.OnBackInvokedDispatcher dispatcher = activity.getOnBackInvokedDispatcher();
+      android.window.OnBackInvokedCallback callback = activity::onBackRequested;
+      dispatcher.registerOnBackInvokedCallback(
+          android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, callback);
+      return () -> dispatcher.unregisterOnBackInvokedCallback(callback);
     }
   }
 

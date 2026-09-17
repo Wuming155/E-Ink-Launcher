@@ -28,8 +28,6 @@ public class CrashCapture implements Thread.UncaughtExceptionHandler {
 
   private static final String TAG = "CrashCapture";
   private static final CrashCapture INSTANCE = new CrashCapture();
-  private static final SimpleDateFormat DATE_FORMAT =
-      new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.getDefault());
 
   private Thread.UncaughtExceptionHandler defaultHandler;
   private Context appContext;
@@ -130,7 +128,7 @@ public class CrashCapture implements Thread.UncaughtExceptionHandler {
         + "-" + Build.DEVICE
         + "-" + Build.PRODUCT
         + "-" + Build.TYPE
-        + "-" + DATE_FORMAT.format(new Date())
+        + "-" + new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.ROOT).format(new Date())
         + "-" + System.currentTimeMillis() + ".log";
 
     if (!Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState())) {

@@ -7,6 +7,7 @@
 
     <ImageView
         android:id="@+id/item_file_image"
+        android:contentDescription="@null"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:src="@drawable/ic_folder_gray_48dp"

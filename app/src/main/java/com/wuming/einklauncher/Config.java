@@ -4,7 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,15 +28,9 @@ public class Config {
   public static final String KEY_SORT_MODE = "launcherSortMode";
   public static final String KEY_LAYOUT_LOCKED = "launcherLayoutLocked";
   public static final String KEY_SHOW_LOCK_HINT = "launcherShowLockHint";
+  public static final String KEY_TEXT_BOLD = "launcherTextBold";
   public static final String KEY_CUSTOM_ORDER = "launcherCustomOrder";
   public static final String KEY_CUSTOM_LABELS = "launcherCustomLabels";
-
-  /** 自定义顺序的分隔符（包名不含换行符，可安全用作分隔符） */
-  private static final String ORDER_SEPARATOR = "\n";
-
-  /** 自定义名称条目分隔符与包名/名称间的分隔符（名称中的换行会被替换，包名不含控制字符） */
-  private static final String LABEL_ENTRY_SEPARATOR = "\n";
-  private static final String LABEL_KV_SEPARATOR = "\u0001";
 
   // ---- 默认值 ----
   private static final int DEFAULT_COL_NUM = 5;
@@ -50,6 +43,7 @@ public class Config {
   private static final int DEFAULT_SORT_MODE = 0;
   private static final boolean DEFAULT_LAYOUT_LOCKED = false;
   private static final boolean DEFAULT_SHOW_LOCK_HINT = true;
+  private static final boolean DEFAULT_TEXT_BOLD = false;
 
   private static final String PREFS_FILE = "launcherPropertyFile";
 
@@ -66,6 +60,7 @@ public class Config {
   private int sortMode = -1;
   private boolean layoutLocked;
   private boolean showLockHint;
+  private boolean textBold;
   private List<String> customOrder;
   private Map<String, String> customLabels;
   private final Set<String> hideApps = new HashSet<>();
@@ -80,6 +75,7 @@ public class Config {
     this.appNameLines = prefs.getInt(KEY_APP_NAME_LINES, DEFAULT_APP_NAME_LINES);
     this.layoutLocked = prefs.getBoolean(KEY_LAYOUT_LOCKED, DEFAULT_LAYOUT_LOCKED);
     this.showLockHint = prefs.getBoolean(KEY_SHOW_LOCK_HINT, DEFAULT_SHOW_LOCK_HINT);
+    this.textBold = prefs.getBoolean(KEY_TEXT_BOLD, DEFAULT_TEXT_BOLD);
   }
 
   // ---- 列数 ----
@@ -240,34 +236,31 @@ public class Config {
     prefs.edit().putBoolean(KEY_SHOW_LOCK_HINT, show).apply();
   }
 
+  // ---- 文字加粗 ----
+
+  public boolean isTextBold() {
+    return textBold;
+  }
+
+  public void setTextBold(boolean bold) {
+    if (this.textBold == bold) return;
+    this.textBold = bold;
+    prefs.edit().putBoolean(KEY_TEXT_BOLD, bold).apply();
+  }
+
   // ---- 自定义顺序（布局锁定时用于固化图标顺序） ----
 
   /** 获取自定义顺序（包名有序列表），未设置时返回空列表 */
   public List<String> getCustomOrder() {
     if (customOrder == null) {
-      customOrder = new ArrayList<>();
-      String raw = prefs.getString(KEY_CUSTOM_ORDER, "");
-      if (raw != null && !raw.isEmpty()) {
-        for (String pkg : raw.split(ORDER_SEPARATOR)) {
-          if (!pkg.isEmpty()) {
-            customOrder.add(pkg);
-          }
-        }
-      }
+      customOrder = ConfigCodec.decodeOrder(prefs.getString(KEY_CUSTOM_ORDER, ""));
     }
     return customOrder;
   }
 
   public void setCustomOrder(List<String> order) {
     customOrder = new ArrayList<>(order);
-    StringBuilder sb = new StringBuilder();
-    for (int i = 0; i < customOrder.size(); i++) {
-      if (i > 0) {
-        sb.append(ORDER_SEPARATOR);
-      }
-      sb.append(customOrder.get(i));
-    }
-    prefs.edit().putString(KEY_CUSTOM_ORDER, sb.toString()).apply();
+    prefs.edit().putString(KEY_CUSTOM_ORDER, ConfigCodec.encodeOrder(customOrder)).apply();
   }
 
   // ---- 自定义应用名称 ----
@@ -275,16 +268,7 @@ public class Config {
   /** 获取自定义名称映射（包名 → 名称），未设置时返回空 Map */
   public Map<String, String> getCustomLabels() {
     if (customLabels == null) {
-      customLabels = new HashMap<>();
-      String raw = prefs.getString(KEY_CUSTOM_LABELS, "");
-      if (raw != null && !raw.isEmpty()) {
-        for (String entry : raw.split(LABEL_ENTRY_SEPARATOR)) {
-          int sep = entry.indexOf(LABEL_KV_SEPARATOR);
-          if (sep > 0) {
-            customLabels.put(entry.substring(0, sep), entry.substring(sep + 1));
-          }
-        }
-      }
+      customLabels = ConfigCodec.decodeLabels(prefs.getString(KEY_CUSTOM_LABELS, ""));
     }
     return customLabels;
   }
@@ -296,6 +280,7 @@ public class Config {
 
   /**
    * 设置应用的自定义名称，空名称表示清除、恢复显示原始名称。
+   * 存储为 JSON 格式，名称可含任意字符（换行等特殊字符不再需要转义）。
    */
   public void setCustomLabel(String packageName, String label) {
     Map<String, String> labels = getCustomLabels();
@@ -304,16 +289,8 @@ public class Config {
         return;
       }
     } else {
-      // 条目按换行分隔，名称中的换行会破坏解析，统一替换为空格
-      labels.put(packageName, label.trim().replace(LABEL_ENTRY_SEPARATOR, " "));
+      labels.put(packageName, label.trim());
     }
-    StringBuilder sb = new StringBuilder();
-    for (Map.Entry<String, String> entry : labels.entrySet()) {
-      if (sb.length() > 0) {
-        sb.append(LABEL_ENTRY_SEPARATOR);
-      }
-      sb.append(entry.getKey()).append(LABEL_KV_SEPARATOR).append(entry.getValue());
-    }
-    prefs.edit().putString(KEY_CUSTOM_LABELS, sb.toString()).apply();
+    prefs.edit().putString(KEY_CUSTOM_LABELS, ConfigCodec.encodeLabels(labels)).apply();
   }
 }

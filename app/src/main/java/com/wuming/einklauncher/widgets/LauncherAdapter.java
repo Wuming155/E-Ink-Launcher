@@ -67,6 +67,7 @@ public class LauncherAdapter {
 
   private float fontSize = 14;
   private int appNameLines = Integer.MAX_VALUE;
+  private boolean textBold = false;
 
   // =========================================================================
   // View 绑定（包级可见，由 EInkLauncherView 调用）
@@ -112,6 +113,18 @@ public class LauncherAdapter {
       holder.appName.setMinLines(lines == 2 ? lines : 0);
       holder.appName.setMaxLines(lines);
     }
+  }
+
+  public void setTextBold(boolean bold) {
+    this.textBold = bold;
+    for (ItemViewHolder holder : holders) {
+      holder.appName.getPaint().setFakeBoldText(bold);
+      holder.appName.invalidate();
+    }
+  }
+
+  public boolean isTextBold() {
+    return textBold;
   }
 
   /**
@@ -203,6 +216,7 @@ public class LauncherAdapter {
     holder.appName.setMinLines(appNameLines == 2 ? appNameLines : 0);
     holder.appName.setMaxLines(appNameLines);
     holder.appName.setEllipsize(TextUtils.TruncateAt.END);
+    holder.appName.getPaint().setFakeBoldText(textBold);
 
     return holder;
   }

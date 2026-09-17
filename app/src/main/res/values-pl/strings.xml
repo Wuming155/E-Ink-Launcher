@@ -4,7 +4,7 @@
     <string name="file_manager">Menedżer plików</string>
 
     <string name="empty_directory_hint">Pusty folder</string>
-    <string name="start_path_name" translatable="false">Urządzenie</string>
+    <string name="start_path_name">Urządzenie</string>
     <string name="type_archive">Archiwum</string>
     <string name="type_certificate">Certyfikat</string>
     <string name="type_directory">Folder</string>
@@ -33,7 +33,7 @@
     <string name="battery_charging">Ładowanie</string>
     <string name="battery_low">Niski poziom</string>
     <string name="battery_full">Pełna</string>
-    <string name="battery_wtf" translatable="false">WTF?</string>
+    <string name="battery_wtf">WTF?</string>
 
     <string name="dialog_cancel">Anuluj</string>
     <string name="dialog_rename">Zmień nazwę</string>
@@ -60,7 +60,7 @@
         <item>Wyłącz</item>
         <item>Uruchom ponownie</item>
     </string-array>
-    <string name="power_title">现在可以操作电源了哦~</string>
+    <string name="power_title">Opcje zasilania</string>
     <string name="setting_help_and_about">Pomoc i informacje</string>
     <string name="path">Ścieżka</string>
     <string name="default_path_setting">Domyślna ścieżka</string>
@@ -68,4 +68,23 @@
     <string name="parent_folder">Wyżej</string>
     <string name="exit">Zakończ</string>
     <string name="delete">Usuń</string>
+    <string name="launch_failed">Nie udało się uruchomić</string>
+    <string name="launch_devicemanager_failed">Otwórz ustawienia administratorów urządzenia i włącz E-Ink Launcher</string>
+    <string name="launch_devicemanager">Otwórz administratorów urządzenia</string>
+    <string name="show_statusbar">Pokaż pasek stanu</string>
+    <string name="show_custom_icon">Pokaż własne ikony</string>
+    <string name="app_show_name">Nazwa aplikacji</string>
+    <string name="setting_sort_mode">Sortowanie</string>
+    <string name="sort_need_usage_permission">Zezwól na dostęp do danych o użytkowaniu, aby użyć tego trybu sortowania</string>
+    <string name="setting_layout_lock">Blokada układu</string>
+    <string name="setting_show_lock_hint">Pokaż informację o blokadzie</string>
+    <string name="setting_text_bold">Pogrubiony tekst</string>
+    <string name="layout_lock_confirm_title">Włącz blokadę układu</string>
+    <string name="layout_lock_confirm_message">Obecna kolejność ikon zostanie zablokowana, a nowe aplikacje będą dodawane na końcu. Do czasu odblokowania nie można zmienić sortowania. Kontynuować?</string>
+    <string name="layout_locked_toast">Układ jest zablokowany. Najpierw go odblokuj</string>
+    <string name="restart_launcher">Uruchom ponownie launcher</string>
+    <string name="about_thanks">Podziękowania:\n%1$s</string>
+    <string name="launcher_settings">Ustawienia launchera</string>
+    <string name="previous_page">Poprzednia strona</string>
+    <string name="next_page">Następna strona</string>
 </resources>

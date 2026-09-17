@@ -58,4 +58,27 @@
     <string name="wifi_status_off">WiFi 꺼짐</string>
     <string name="wifi_status_on">WiFi 켜짐</string>
     <string name="wifi_status_opening">WiFi 여는 중</string>
+    <string name="launch_failed">실행 실패</string>
+    <string name="launch_devicemanager_failed">기기 관리자를 열고 E-Ink Launcher를 활성화하세요</string>
+    <string name="launch_devicemanager">기기 관리자 열기</string>
+    <string name="show_statusbar">상태 표시줄 표시</string>
+    <string name="show_custom_icon">사용자 지정 아이콘 표시</string>
+    <string name="app_show_name">앱 이름</string>
+    <string name="setting_sort_mode">정렬</string>
+    <string name="sort_need_usage_permission">이 정렬 모드를 사용하려면 사용 정보 접근 권한을 허용하세요</string>
+    <string name="setting_layout_lock">레이아웃 잠금</string>
+    <string name="setting_show_lock_hint">잠금 안내 표시</string>
+    <string name="setting_text_bold">굵은 글씨</string>
+    <string name="layout_lock_confirm_title">레이아웃 잠금 활성화</string>
+    <string name="layout_lock_confirm_message">현재 아이콘 순서가 고정되며 새로 설치한 앱은 끝에 추가됩니다. 잠금을 해제할 때까지 정렬 모드를 변경할 수 없습니다. 계속할까요?</string>
+    <string name="layout_locked_toast">레이아웃이 잠겨 있습니다. 먼저 잠금을 해제하세요</string>
+    <string name="restart_launcher">런처 다시 시작</string>
+    <string name="about_thanks">감사합니다:\n%1$s</string>
+    <string name="launcher_settings">런처 설정</string>
+    <string name="previous_page">이전 페이지</string>
+    <string name="next_page">다음 페이지</string>
+    <string-array name="power_menu">
+        <item>전원 끄기</item>
+        <item>다시 시작</item>
+    </string-array>
 </resources>

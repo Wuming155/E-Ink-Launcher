@@ -1,6 +1,7 @@
 package com.wuming.einklauncher;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -94,6 +95,7 @@ public class Utils {
    * 兼容 Android 13+ 的广播注册。
    * API 33 起需要指定 RECEIVER_EXPORTED / RECEIVER_NOT_EXPORTED。
    */
+  @SuppressLint("UnspecifiedRegisterReceiverFlag")
   public static void registerReceiverCompat(Context context, BroadcastReceiver receiver,
                                              IntentFilter filter) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -107,14 +109,13 @@ public class Utils {
    * 检查存储权限，已授予则直接执行 next；
    * 未授予时先保存 next，授权结果通过 {@link #onStoragePermissionResult} 继续执行。
    */
+  @SuppressLint("InlinedApi")
   public static void checkStoragePermission(Activity activity, Runnable next) {
-    String[] permissions = {
-        Manifest.permission.READ_EXTERNAL_STORAGE,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+        && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
         && activity.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
             == PackageManager.PERMISSION_DENIED) {
+      String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE};
       pendingStorageAction = next;
       activity.requestPermissions(permissions, REQUEST_STORAGE_PERMISSION);
     } else if (next != null) {

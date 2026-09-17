@@ -38,11 +38,11 @@ public class RatioImageView extends ImageView {
   }
 
   private void initAttrs(Context context, AttributeSet attrs, int defStyleAttr) {
-    TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.RatioLayout, defStyleAttr, 0);
-    reference = ta.getInt(R.styleable.RatioLayout_reference, 0) == 0
+    TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.RatioImageView, defStyleAttr, 0);
+    reference = ta.getInt(R.styleable.RatioImageView_reference, 0) == 0
         ? ReferenceType.WIDTH : ReferenceType.HEIGHT;
-    ratioHeight = ta.getFloat(R.styleable.RatioLayout_ratioHeight, 1);
-    ratioWidth = ta.getFloat(R.styleable.RatioLayout_ratioWidth, 1);
+    ratioHeight = ta.getFloat(R.styleable.RatioImageView_ratioHeight, 1);
+    ratioWidth = ta.getFloat(R.styleable.RatioImageView_ratioWidth, 1);
     ta.recycle();
   }
 

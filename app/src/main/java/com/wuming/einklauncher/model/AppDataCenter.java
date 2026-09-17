@@ -61,7 +61,7 @@ public class AppDataCenter {
 
   public void setPageStatus(TextView pageStatus) {
     this.pageStatus = pageStatus;
-    pageStatus.setText((pageIndex + 1) + "/" + (pageCount + 1));
+    updatePageStatusView();
   }
 
   // =========================================================================
@@ -131,11 +131,19 @@ public class AppDataCenter {
     }
   }
 
-  /** 返回当前列表顺序（包名），用于布局锁定时快照固化 */
+  /**
+   * 返回当前列表顺序（包名），用于布局锁定时快照固化。
+   * 同一包名有多个桌面入口（Activity）时只保留首次出现，保证快照中包名唯一、
+   * 锁定后重复项的相对位置稳定不随系统查询顺序漂移。
+   */
   public List<String> getAppOrder() {
     List<String> order = new ArrayList<>(mApps.size());
+    Set<String> seen = new HashSet<>();
     for (ResolveInfo info : mApps) {
-      order.add(info.activityInfo.packageName);
+      String pkg = info.activityInfo.packageName;
+      if (seen.add(pkg)) {
+        order.add(pkg);
+      }
     }
     return order;
   }
@@ -163,10 +171,14 @@ public class AppDataCenter {
     if (pkgA == null || pkgB == null || pkgA.equals(pkgB)) return false;
     int indexA = -1;
     int indexB = -1;
+    // 同包多入口时取首次出现的位置，与自定义顺序索引的解析保持一致
     for (int i = 0; i < mApps.size(); i++) {
       String pkg = mApps.get(i).activityInfo.packageName;
-      if (pkgA.equals(pkg)) indexA = i;
-      else if (pkgB.equals(pkg)) indexB = i;
+      if (pkgA.equals(pkg)) {
+        if (indexA < 0) indexA = i;
+      } else if (pkgB.equals(pkg)) {
+        if (indexB < 0) indexB = i;
+      }
     }
     if (indexA < 0 || indexB < 0) return false;
 
@@ -262,7 +274,13 @@ public class AppDataCenter {
     int pageStart = pageIndex * itemCount;
     int pageEnd = Math.min(pageStart + itemCount, mApps.size());
     adapter.setAppList(mApps.subList(pageStart, pageEnd));
-    pageStatus.setText((pageIndex + 1) + "/" + (pageCount + 1));
+    updatePageStatusView();
+  }
+
+  private void updatePageStatusView() {
+    if (pageStatus != null) {
+      pageStatus.setText(mContext.getString(R.string.page_status, pageIndex + 1, pageCount + 1));
+    }
   }
 
   private void updatePageCount() {

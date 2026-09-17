@@ -37,7 +37,9 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     void onShowCustomIconChanged(boolean show);
     void onSortModeChanged(int mode);
     void onLayoutLockedChanged(boolean locked);
+    void onTextBoldChanged(boolean bold);
     void onEnterManageMode();
+    void onBackRequested();
     /** 切换布局调整模式（开启进入调整、再点退出） */
     void onToggleLayoutAdjust();
     boolean isLayoutAdjusting();
@@ -57,6 +59,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   private TextView layoutLock;
   private TextView showLockHint;
   private TextView layoutAdjust;
+  private TextView textBold;
   private Config config;
 
   @SuppressWarnings("deprecation")
@@ -72,7 +75,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    return inflater.inflate(R.layout.activity_setting, null);
+    return inflater.inflate(R.layout.activity_setting, container, false);
   }
 
   @Override
@@ -103,6 +106,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     layoutLock = rootView.findViewById(R.id.layoutLock);
     showLockHint = rootView.findViewById(R.id.showLockHint);
     layoutAdjust = rootView.findViewById(R.id.layoutAdjust);
+    textBold = rootView.findViewById(R.id.textBold);
     hideDivider = rootView.findViewById(R.id.hideDivider);
     fontControl = rootView.findViewById(R.id.font_control);
     colNumSpinner = rootView.findViewById(R.id.col_num_spinner);
@@ -115,14 +119,17 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     showCustomIcon.setOnClickListener(this);
     layoutLock.setOnClickListener(this);
     showLockHint.setOnClickListener(this);
+    textBold.setOnClickListener(this);
 
     // 初始化 UI 状态
     showStatusBar.getPaint().setStrikeThruText(config.isShowStatusBar());
     hideDivider.getPaint().setStrikeThruText(config.isHideDivider());
-    hideDivider.setText(config.isHideDivider() ? "显示分隔线" : "隐藏分隔线");
+    hideDivider.setText(config.isHideDivider()
+        ? R.string.setting_show_divider : R.string.setting_hide_divider);
     showCustomIcon.getPaint().setStrikeThruText(config.isShowCustomIcon());
     layoutLock.getPaint().setStrikeThruText(config.isLayoutLocked());
     showLockHint.getPaint().setStrikeThruText(config.isShowLockHint());
+    textBold.getPaint().setStrikeThruText(config.isTextBold());
     // 布局调整是临时模式（非持久化配置），状态由宿主 Activity 提供
     layoutAdjust.getPaint().setStrikeThruText(listener.isLayoutAdjusting());
     fontControl.setProgress((int) ((config.getFontSize() - 10) * 10));
@@ -238,7 +245,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   public void onClick(View v) {
     int id = v.getId();
     if (id == R.id.toBack || id == R.id.rootView) {
-      getActivity().onBackPressed();
+      listener.onBackRequested();
     } else if (id == R.id.deleteApp) {
       handleDeleteApp();
     } else if (id == R.id.showStatusBar) {
@@ -261,6 +268,8 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
       handleToggleLockHint();
     } else if (id == R.id.layoutAdjust) {
       handleLayoutAdjust();
+    } else if (id == R.id.textBold) {
+      handleToggleTextBold();
     }
   }
 
@@ -273,22 +282,22 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
       return;
     }
     listener.onEnterManageMode();
-    getActivity().onBackPressed();
+    listener.onBackRequested();
   }
 
   private void handleToggleStatusBar() {
     boolean newValue = !config.isShowStatusBar();
     config.setShowStatusBar(newValue);
     listener.onShowStatusBarChanged(newValue);
-    getActivity().onBackPressed();
+    listener.onBackRequested();
   }
 
   private void handleToggleDivider() {
     boolean newValue = !config.isHideDivider();
     config.setHideDivider(newValue);
-    hideDivider.setText(newValue ? "显示分隔线" : "隐藏分隔线");
+    hideDivider.setText(newValue ? R.string.setting_show_divider : R.string.setting_hide_divider);
     listener.onHideDividerChanged(newValue);
-    getActivity().onBackPressed();
+    listener.onBackRequested();
   }
 
   private void handleToggleCustomIcon() {
@@ -298,7 +307,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
         boolean newValue = !config.isShowCustomIcon();
         config.setShowCustomIcon(newValue);
         listener.onShowCustomIconChanged(newValue);
-        getActivity().onBackPressed();
+        listener.onBackRequested();
       }
     });
   }
@@ -308,7 +317,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     if (config.isLayoutLocked()) {
       config.setLayoutLocked(false);
       listener.onLayoutLockedChanged(false);
-      getActivity().onBackPressed();
+      listener.onBackRequested();
       return;
     }
     new AlertDialog.Builder(getActivity())
@@ -319,7 +328,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
           public void onClick(DialogInterface dialog, int which) {
             config.setLayoutLocked(true);
             listener.onLayoutLockedChanged(true);
-            getActivity().onBackPressed();
+            listener.onBackRequested();
           }
         })
         .setNegativeButton(R.string.dialog_cancel, null)
@@ -333,11 +342,19 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     showLockHint.getPaint().setStrikeThruText(newValue);
   }
 
+  private void handleToggleTextBold() {
+    boolean newValue = !config.isTextBold();
+    config.setTextBold(newValue);
+    textBold.getPaint().setStrikeThruText(newValue);
+    textBold.invalidate();
+    listener.onTextBoldChanged(newValue);
+  }
+
   /** 切换布局调整模式并回到桌面：开启后长按/点击图标交换位置，桌面「完成」退出 */
   private void handleLayoutAdjust() {
     listener.onToggleLayoutAdjust();
     layoutAdjust.getPaint().setStrikeThruText(listener.isLayoutAdjusting());
-    getActivity().onBackPressed();
+    listener.onBackRequested();
   }
 
   @Override

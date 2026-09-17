@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clickable="true"
+    android:focusable="true"
     android:orientation="vertical"
     tools:background="@drawable/app_item_normal">
 
@@ -26,6 +27,7 @@
 
             <com.wuming.einklauncher.widgets.RatioImageView
                 android:id="@+id/appImage"
+                android:contentDescription="@null"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.5"
@@ -57,6 +59,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="center_vertical"
         android:clickable="true"
+        android:focusable="true"
         android:gravity="center"
         android:orientation="horizontal"
         android:visibility="invisible">
@@ -64,6 +67,7 @@
 
         <com.wuming.einklauncher.widgets.RatioImageView
             android:id="@+id/menu_delete"
+            android:contentDescription="@string/dialog_uninstall"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -80,6 +84,7 @@
 
         <com.wuming.einklauncher.widgets.RatioImageView
             android:id="@+id/menu_hide"
+            android:contentDescription="@string/dialog_hide"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"

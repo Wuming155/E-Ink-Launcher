@@ -49,6 +49,7 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
   private final Collator collator;
   private final Map<String, Long> installTimeCache = new HashMap<>();
   private final Map<String, Integer> customIndex = new HashMap<>();
+  private final Map<ResolveInfo, String> labelCache = new HashMap<>();
   private Map<String, UsageStats> usageStatsMap;
 
   public AppSortComparator(Context context, PackageManager pm, int mode) {
@@ -63,7 +64,11 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
 
     if (customOrder != null) {
       for (int i = 0; i < customOrder.size(); i++) {
-        customIndex.put(customOrder.get(i), i);
+        // 同包多入口时取首次出现的索引，避免后项覆盖前项导致重复项顺序不稳定
+        String pkg = customOrder.get(i);
+        if (!customIndex.containsKey(pkg)) {
+          customIndex.put(pkg, i);
+        }
       }
     }
 
@@ -93,6 +98,10 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
 
   @Override
   public int compare(ResolveInfo a, ResolveInfo b) {
+    if (mode == SORT_CUSTOM) {
+      return compareByCustom(a, b);
+    }
+
     boolean aVirtual = isVirtual(a);
     boolean bVirtual = isVirtual(b);
     if (aVirtual && bVirtual) return 0;
@@ -148,9 +157,21 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
   }
 
   private int compareByName(ResolveInfo a, ResolveInfo b) {
-    String labelA = a.loadLabel(pm).toString();
-    String labelB = b.loadLabel(pm).toString();
-    return collator.compare(labelA, labelB);
+    String labelA = labelCache.get(a);
+    if (labelA == null) {
+      labelA = a.loadLabel(pm).toString();
+      labelCache.put(a, labelA);
+    }
+    String labelB = labelCache.get(b);
+    if (labelB == null) {
+      labelB = b.loadLabel(pm).toString();
+      labelCache.put(b, labelB);
+    }
+    int diff = collator.compare(labelA, labelB);
+    if (diff != 0) return diff;
+    String compA = a.activityInfo != null ? (a.activityInfo.packageName + "/" + a.activityInfo.name) : "";
+    String compB = b.activityInfo != null ? (b.activityInfo.packageName + "/" + b.activityInfo.name) : "";
+    return compA.compareTo(compB);
   }
 
   private long getInstallTime(ResolveInfo info) {
@@ -207,10 +228,7 @@ public class AppSortComparator implements Comparator<ResolveInfo> {
       if (existing == null) {
         map.put(pkg, stats);
       } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-        // 保留 totalTimeInForeground 和 lastTimeUsed 更大的那个
-        if (stats.getLastTimeUsed() > existing.getLastTimeUsed()) {
-          map.put(pkg, stats);
-        }
+        existing.add(stats);
       }
     }
     return map;

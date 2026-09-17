@@ -63,4 +63,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.core)
+    testImplementation(libs.junit)
+    // 单元测试运行在 JVM 上，需引入真实的 org.json 实现（android.jar 中为空壳桩）
+    testImplementation(libs.json)
 }

@@ -4,13 +4,14 @@
     android:id="@+id/rootView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:clickable="true">
+    android:clickable="true"
+    android:focusable="true">
     <!--android:background="#aaffffff"-->
 
     <!--  <LinearLayout
           android:layout_width="200dp"
           android:layout_height="wrap_content"
-          android:layout_gravity="right|bottom"
+          android:layout_gravity="end|bottom"
           android:layout_marginBottom="@dimen/menu_item_height"
           android:background="@drawable/border"
           android:orientation="vertical">
@@ -33,7 +34,7 @@
                   android:layout_width="wrap_content"
                   android:layout_height="match_parent"
                   android:gravity="center_vertical"
-                  android:text="桌面设置"
+                  android:text="@string/launcher_settings"
                   android:textColor="#000000"
                   android:textSize="20sp" />
           </LinearLayout>
@@ -213,9 +214,10 @@
           android:id="@+id/toBack"
           android:layout_width="60dp"
           android:layout_height="@dimen/menu_item_height"
-          android:layout_gravity="bottom|right"
+          android:layout_gravity="bottom|end"
           android:background="#ffffff"
           android:clickable="true"
+          android:focusable="true"
           android:padding="5dp"
           android:src="@drawable/close_unclick" />-->
 
@@ -223,9 +225,11 @@
         android:id="@+id/toBack"
         android:layout_width="60dp"
         android:layout_height="@dimen/menu_item_height"
-        android:layout_gravity="bottom|right"
+        android:layout_gravity="bottom|end"
         android:background="#ffffff"
         android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="@string/dialog_close"
         android:padding="5dp"
         android:src="@drawable/close_unclick" />
 
@@ -235,6 +239,7 @@
         android:layout_height="match_parent"
         android:layout_marginBottom="@dimen/menu_item_height"
         android:clickable="true"
+        android:focusable="true"
         android:visibility="gone">
 
         <FrameLayout
@@ -268,9 +273,12 @@
             android:layout_height="50dp"
             android:layout_above="@id/ff_control"
             android:layout_alignRight="@id/ff_control"
-            android:layout_gravity="center|right"
+            android:layout_alignEnd="@id/ff_control"
+            android:layout_gravity="center|end"
             android:background="@drawable/border"
             android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="@string/dialog_close"
             android:padding="5dp"
             android:src="@drawable/close_unclick" />
     </RelativeLayout>
@@ -278,7 +286,7 @@
     <ScrollView
         android:layout_width="210dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="right|bottom"
+        android:layout_gravity="end|bottom"
         android:layout_marginBottom="@dimen/menu_item_height"
         android:background="@drawable/border">
 
@@ -294,19 +302,23 @@
                 android:layout_height="55dp"
                 android:background="?android:selectableItemBackground"
                 android:paddingRight="30dp"
+                android:paddingEnd="30dp"
+                android:paddingLeft="30dp"
+                android:paddingStart="30dp"
                 android:visibility="gone">
 
                 <ImageView
                     android:layout_width="55dp"
                     android:layout_height="55dp"
                     android:scaleType="centerInside"
+                    android:contentDescription="@string/launcher_settings"
                     android:src="@drawable/guide_last" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center_vertical"
-                    android:text="桌面设置"
+                    android:text="@string/launcher_settings"
                     android:textColor="#000000"
                     android:textSize="20sp" />
             </LinearLayout>
@@ -331,6 +343,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginStart="10dp"
                     android:gravity="center"
                     android:text="@string/setting_row_icons"
                     android:textSize="@dimen/menu_item_text_size" />
@@ -340,6 +354,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginLeft="10dp"
+                    android:layout_marginStart="10dp"
                     android:entries="@array/col_num_values"
                     android:gravity="center"></Spinner>
 
@@ -371,6 +386,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginStart="10dp"
                     android:gravity="center"
                     android:text="@string/setting_column_icons"
                     android:textSize="@dimen/menu_item_text_size" />
@@ -380,6 +397,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginLeft="10dp"
+                    android:layout_marginStart="10dp"
                     android:entries="@array/col_num_values"
                     android:gravity="center"/>
 
@@ -409,6 +427,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginStart="10dp"
                     android:gravity="center"
                     android:text="@string/app_show_name"
                     android:textSize="@dimen/menu_item_text_size" />
@@ -418,6 +438,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginLeft="10dp"
+                    android:layout_marginStart="10dp"
                     android:entries="@array/app_name_line"
                     android:gravity="center"/>
 
@@ -447,6 +468,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginStart="10dp"
                     android:gravity="center"
                     android:text="@string/setting_sort_mode"
                     android:textSize="@dimen/menu_item_text_size" />
@@ -456,6 +479,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginLeft="10dp"
+                    android:layout_marginStart="10dp"
                     android:entries="@array/sort_modes"
                     android:gravity="center"/>
 
@@ -476,7 +500,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/menu_item_height"
                 android:paddingLeft="20dp"
-                android:gravity="left|center_vertical"
+                android:paddingStart="20dp"
+                android:paddingRight="20dp"
+                android:paddingEnd="20dp"
+                android:gravity="start|center_vertical"
                 android:text="@string/setting_show_divider"
                 android:textSize="@dimen/menu_item_text_size" />
 
@@ -491,7 +518,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/menu_item_height"
                 android:paddingLeft="20dp"
-                android:gravity="left|center_vertical"
+                android:paddingStart="20dp"
+                android:paddingRight="20dp"
+                android:paddingEnd="20dp"
+                android:gravity="start|center_vertical"
                 android:text="@string/show_statusbar"
                 android:textSize="@dimen/menu_item_text_size" />
 
@@ -505,7 +535,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/menu_item_height"
                 android:paddingLeft="20dp"
-                android:gravity="left|center_vertical"
+                android:paddingStart="20dp"
+                android:gravity="start|center_vertical"
                 android:text="@string/show_custom_icon"
                 android:textSize="@dimen/menu_item_text_size" />
 
@@ -519,7 +550,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/menu_item_height"
                 android:paddingLeft="20dp"
-                android:gravity="left|center_vertical"
+                android:paddingStart="20dp"
+                android:gravity="start|center_vertical"
                 android:text="@string/setting_layout_lock"
                 android:textSize="@dimen/menu_item_text_size" />
 
@@ -533,7 +565,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/menu_item_height"
                 android:paddingLeft="40dp"
-                android:gravity="left|center_vertical"
+                android:paddingStart="40dp"
+                android:gravity="start|center_vertical"
                 android:text="@string/setting_show_lock_hint"
                 android:textSize="@dimen/menu_item_text_size" />
 
@@ -547,7 +580,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="@dimen/menu_item_height"
                 android:paddingLeft="20dp"
-                android:gravity="left|center_vertical"
+                android:paddingStart="20dp"
+                android:gravity="start|center_vertical"
                 android:text="@string/setting_layout_adjust"
                 android:textSize="@dimen/menu_item_text_size" />
 
@@ -566,6 +600,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginLeft="20dp"
+                    android:layout_marginStart="20dp"
                     android:gravity="center"
                     android:text="@string/setting_set_font_size"
                     android:textSize="@dimen/menu_item_text_size" />
@@ -579,11 +614,29 @@
                 android:background="#000000" />
 
             <TextView
+                android:id="@+id/textBold"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/menu_item_height"
+                android:paddingLeft="20dp"
+                android:paddingStart="20dp"
+                android:paddingRight="20dp"
+                android:paddingEnd="20dp"
+                android:gravity="start|center_vertical"
+                android:text="@string/setting_text_bold"
+                android:textSize="@dimen/menu_item_text_size" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#000000" />
+
+            <TextView
                 android:id="@+id/deleteApp"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:gravity="center_vertical"
                 android:paddingLeft="20dp"
+                android:paddingStart="20dp"
                 android:text="@string/setting_apps_manager"
                 android:textSize="@dimen/menu_item_text_size"
                 tools:text="管理应用" />
@@ -603,6 +656,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_marginLeft="20dp"
+                    android:layout_marginStart="20dp"
                     android:gravity="center"
                     android:text="@string/setting_help_and_about"
                     android:textSize="@dimen/menu_item_text_size" />
@@ -618,7 +672,7 @@
 
             <Space
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
                 android:layout_weight="1"
                 android:minHeight="20dp"
                 android:visibility="gone" />

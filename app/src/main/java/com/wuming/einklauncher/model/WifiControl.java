@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
@@ -48,7 +49,7 @@ public class WifiControl {
   }
 
   private WifiControl(Context context) {
-    appContext = context;
+    appContext = context.getApplicationContext();
     wifiManager = (WifiManager) appContext.getSystemService(Context.WIFI_SERVICE);
 
     applyWifiState(wifiManager.getWifiState());
@@ -87,6 +88,18 @@ public class WifiControl {
   }
 
   public static void onClickWifiItem() {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      try {
+        Intent panelIntent = new Intent(Settings.Panel.ACTION_WIFI);
+        panelIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        instance.appContext.startActivity(panelIntent);
+        return;
+      } catch (Exception e) {
+        Log.w(TAG, "Settings.Panel.ACTION_WIFI unavailable, falling back to wifi settings", e);
+        onLongClickWifiItem();
+        return;
+      }
+    }
     int state = instance.wifiManager.getWifiState();
     boolean isEnabled = (state == WifiManager.WIFI_STATE_ENABLING || state == WifiManager.WIFI_STATE_ENABLED);
     instance.wifiManager.setWifiEnabled(!isEnabled);
@@ -149,8 +162,14 @@ public class WifiControl {
         if (networkInfo.getExtraInfo() != null) {
           wifiName = networkInfo.getExtraInfo().replace("\"", "");
         }
-        if (wifiName.isEmpty()) {
-          wifiName = wifiManager.getConnectionInfo().getSSID().replace("\"", "");
+        if (wifiName.isEmpty() && wifiManager.getConnectionInfo() != null) {
+          String ssid = wifiManager.getConnectionInfo().getSSID();
+          if (ssid != null) {
+            wifiName = ssid.replace("\"", "");
+          }
+        }
+        if ("<unknown ssid>".equalsIgnoreCase(wifiName) || "<unknown>".equalsIgnoreCase(wifiName)) {
+          wifiName = "";
         }
         if (!TextUtils.isEmpty(wifiName)) {
           wifiName = "\n" + wifiName;

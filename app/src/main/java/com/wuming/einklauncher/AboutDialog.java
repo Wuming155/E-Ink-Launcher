@@ -28,7 +28,7 @@ public class AboutDialog {
     root.setBackgroundColor(0xffffffff);
 
     TextView appName = new TextView(context);
-    appName.setText("E-Ink Launcher");
+    appName.setText(R.string.app_name);
     appName.setTextSize(30);
     root.addView(appName);
 
@@ -43,7 +43,7 @@ public class AboutDialog {
     root.addView(line, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Utils.dp2Px(context, 1)));
 
     TextView thanksView = new TextView(context);
-    thanksView.setText("Thanks:\nMaciej Haudek");
+    thanksView.setText(context.getString(R.string.about_thanks, "Maciej Haudek"));
     thanksView.setTextSize(14);
     thanksView.setPadding(0, Utils.dp2Px(context, 10), 0, 0);
     root.addView(thanksView);

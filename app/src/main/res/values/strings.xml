@@ -3,7 +3,7 @@
     <string name="file_manager">File Manager</string>
 
     <string name="empty_directory_hint">Empty directory</string>
-    <string name="start_path_name" translatable="false">Device</string>
+    <string name="start_path_name">Device</string>
     <string name="type_archive">Archive</string>
     <string name="type_certificate">Certificate</string>
     <string name="type_directory">Directory</string>
@@ -32,7 +32,7 @@
     <string name="battery_charging">Charging</string>
     <string name="battery_low">Low Battery</string>
     <string name="battery_full">Full</string>
-    <string name="battery_wtf" translatable="false">WTF?</string>
+    <string name="battery_wtf">WTF?</string>
 
     <string name="dialog_cancel">Cancel</string>
     <string name="dialog_rename">Rename</string>
@@ -59,9 +59,7 @@
         <item>Power off</item>
         <item>Reboot</item>
     </string-array>
-    <string name="power_title" translatable="false">现在可以操作电源了哦~</string>
-    <string name="oh_no">混淆有毛用啊，文件这么少,代码渣貌似也能增加难度,不想加固，加固有问题，大哥我这就署名有价值，反编译别把我名字去了- -</string>
-    <string name="come_on">给点赏钱吧，支付鸨就行，账号是邮箱</string>
+    <string name="power_title">Power options</string>
     <string name="setting_help_and_about">Help &amp; About</string>
     <string name="path">Path</string>
     <string name="default_path_setting">Default Path</string>
@@ -76,10 +74,17 @@
     <string name="sort_need_usage_permission">Please grant usage access permission for this sort mode</string>
     <string name="setting_layout_lock">Layout Lock</string>
     <string name="setting_show_lock_hint">Show Lock Hint</string>
+    <string name="setting_text_bold">Bold text</string>
     <string name="layout_lock_confirm_title">Enable Layout Lock</string>
     <string name="layout_lock_confirm_message">The current icon order will be frozen and newly installed apps will be appended to the end. Sort mode cannot be changed until you unlock. Continue?</string>
     <string name="layout_locked_toast">Layout is locked, unlock it first</string>
     <string name="setting_layout_adjust">Adjust Layout</string>
     <string name="adjust_mode_hint">Adjust layout: long-press to select an app, then tap another to swap positions. Tap the selected app again to cancel.</string>
     <string name="dialog_ok">OK</string>
+    <string name="restart_launcher">Restart Launcher</string>
+    <string name="about_thanks">Thanks:\n%1$s</string>
+    <string name="launcher_settings">Launcher Settings</string>
+    <string name="previous_page">Previous Page</string>
+    <string name="next_page">Next Page</string>
+    <string name="page_status" translatable="false">%1$d/%2$d</string>
 </resources>
