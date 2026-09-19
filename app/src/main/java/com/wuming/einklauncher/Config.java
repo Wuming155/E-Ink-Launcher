@@ -47,6 +47,8 @@ public class Config {
 
   private static final String PREFS_FILE = "launcherPropertyFile";
 
+  private static Config instance;
+
   private final SharedPreferences prefs;
 
   // ---- 缓存字段 ----
@@ -66,7 +68,18 @@ public class Config {
   private final Set<String> hideApps = new HashSet<>();
   private boolean hideAppsLoaded = false;
 
-  public Config(Context context) {
+  /**
+   * 获取进程内共享实例。Launcher 与 SettingFragment 等多方读写同一份配置，
+   * 各自 new 实例会持有独立缓存导致互相覆盖，必须统一从这里获取。
+   */
+  public static Config get(Context context) {
+    if (instance == null) {
+      instance = new Config(context.getApplicationContext());
+    }
+    return instance;
+  }
+
+  private Config(Context context) {
     this.prefs = context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE);
     // 预加载布尔配置
     this.hideDivider = prefs.getBoolean(KEY_HIDE_DIVIDER, DEFAULT_HIDE_DIVIDER);

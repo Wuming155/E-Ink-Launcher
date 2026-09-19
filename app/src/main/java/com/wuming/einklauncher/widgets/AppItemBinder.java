@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -219,7 +220,23 @@ public class AppItemBinder {
     holder.menuHide.setOnClickListener(hideClickListener);
 
     holder.itemView.setVisibility(View.VISIBLE);
-    holder.itemView.setAlpha(isAdjust && pkg.equals(selectedPkg) ? 0.4f : 1f);
+    applyAdjustSelection(holder.itemView, isAdjust && pkg.equals(selectedPkg));
+  }
+
+  /**
+   * 布局调整模式选中反馈：API 23+ 用粗黑前景边框（墨水屏上 alpha 几乎不可辨），
+   * 低版本回退为半透明。
+   */
+  @SuppressWarnings("deprecation")
+  private void applyAdjustSelection(View itemView, boolean selected) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+      itemView.setForeground(selected
+          ? itemView.getContext().getDrawable(R.drawable.app_item_selected)
+          : null);
+      itemView.setAlpha(1f);
+    } else {
+      itemView.setAlpha(selected ? 0.4f : 1f);
+    }
   }
 
   private void clearItem(LauncherAdapter.ItemViewHolder holder) {
@@ -230,6 +247,7 @@ public class AppItemBinder {
     holder.menuDelete.setOnClickListener(null);
     holder.menuHide.setOnClickListener(null);
     holder.menuContainer.setVisibility(View.GONE);
+    applyAdjustSelection(holder.itemView, false);
     holder.itemView.setAlpha(0);
   }
 

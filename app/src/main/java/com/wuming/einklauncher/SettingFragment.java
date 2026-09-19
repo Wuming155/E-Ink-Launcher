@@ -82,7 +82,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   public void onActivityCreated(Bundle savedInstanceState) {
     super.onActivityCreated(savedInstanceState);
     rootView = getView();
-    config = new Config(getActivity());
+    config = Config.get(getActivity());
     initViews();
     initSpinners();
     initFontControl();

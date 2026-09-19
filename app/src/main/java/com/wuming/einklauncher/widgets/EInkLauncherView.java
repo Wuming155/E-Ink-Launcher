@@ -3,6 +3,7 @@ package com.wuming.einklauncher.widgets;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -51,6 +52,7 @@ public class EInkLauncherView extends ViewGroup {
   private float touchDownX;
   private float touchDownY;
   private float swipeThreshold;
+  private VelocityTracker velocityTracker;
 
   // =========================================================================
   // 构造器
@@ -244,15 +246,36 @@ public class EInkLauncherView extends ViewGroup {
   // 手势检测
   // =========================================================================
 
+  /** 快速轻扫判定速度（px/s），位移不足但速度达到也算翻页 */
+  private static final float FLING_VELOCITY = 1200f;
+  /** 主轴约束系数：水平位移需明显大于垂直位移，斜向滑动不误翻页 */
+  private static final float AXIS_RATIO = 1.2f;
+
   @Override
   public boolean dispatchTouchEvent(MotionEvent event) {
     switch (event.getActionMasked()) {
       case MotionEvent.ACTION_DOWN:
         touchDownX = event.getX();
         touchDownY = event.getY();
+        recycleVelocityTracker();
+        velocityTracker = VelocityTracker.obtain();
+        velocityTracker.addMovement(event);
+        break;
+      case MotionEvent.ACTION_MOVE:
+        if (velocityTracker != null) {
+          velocityTracker.addMovement(event);
+        }
+        break;
+      case MotionEvent.ACTION_CANCEL:
+        // 手势被系统打断（来电、下拉通知栏等）时静默丢弃，不触发翻页
+        recycleVelocityTracker();
         break;
       case MotionEvent.ACTION_UP:
+        if (velocityTracker != null) {
+          velocityTracker.addMovement(event);
+        }
         int dir = detectSwipe(event.getX(), event.getY());
+        recycleVelocityTracker();
         if (dir != 0 && pageChangeListener != null) {
           if (dir > 0) pageChangeListener.onPagePrev();
           else pageChangeListener.onPageNext();
@@ -264,7 +287,8 @@ public class EInkLauncherView extends ViewGroup {
   }
 
   /**
-   * 检测滑动方向。
+   * 检测滑动翻页方向：仅水平主轴滑动有效。
+   * 长距离慢拖（位移超阈值）与短距离快扫（速度超阈值）都算翻页。
    *
    * @return 1 = 上一页, -1 = 下一页, 0 = 无有效滑动
    */
@@ -272,8 +296,27 @@ public class EInkLauncherView extends ViewGroup {
     if (swipeThreshold <= 0) return 0;
     float dx = upX - touchDownX;
     float dy = upY - touchDownY;
-    if (dx > swipeThreshold || dy > swipeThreshold) return 1;
-    if (dx < -swipeThreshold || dy < -swipeThreshold) return -1;
+    float adx = Math.abs(dx);
+    float ady = Math.abs(dy);
+
+    float vx = 0;
+    if (velocityTracker != null) {
+      velocityTracker.computeCurrentVelocity(1000);
+      vx = Math.abs(velocityTracker.getXVelocity());
+    }
+
+    boolean longDrag = adx > swipeThreshold;
+    boolean fling = vx > FLING_VELOCITY && adx > swipeThreshold / 4f;
+    if ((longDrag || fling) && adx * AXIS_RATIO > ady) {
+      return dx > 0 ? 1 : -1;
+    }
     return 0;
+  }
+
+  private void recycleVelocityTracker() {
+    if (velocityTracker != null) {
+      velocityTracker.recycle();
+      velocityTracker = null;
+    }
   }
 }

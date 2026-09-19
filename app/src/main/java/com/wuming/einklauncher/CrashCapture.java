@@ -43,11 +43,9 @@ public class CrashCapture implements Thread.UncaughtExceptionHandler {
   /**
    * 初始化崩溃捕获。
    *
-   * @param context         Application Context
-   * @param restartTime     重启延迟（保留参数，当前不使用）
-   * @param restartActivity 重启目标 Activity（保留参数，当前不使用）
+   * @param context Application Context
    */
-  public void init(Context context, long restartTime, Class<?> restartActivity) {
+  public void init(Context context) {
     appContext = context.getApplicationContext();
     defaultHandler = Thread.getDefaultUncaughtExceptionHandler();
     Thread.setDefaultUncaughtExceptionHandler(this);
@@ -56,34 +54,28 @@ public class CrashCapture implements Thread.UncaughtExceptionHandler {
   @Override
   public void uncaughtException(Thread thread, Throwable ex) {
     ex.printStackTrace();
-
-    if (!handleException(ex) && defaultHandler != null) {
-      defaultHandler.uncaughtException(thread, ex);
-      return;
-    }
-
     try {
+      collectDeviceInfo();
       Thread.sleep(2000);
-    } catch (InterruptedException ignored) {
+      showCrashPage(saveCrashInfo(ex));
+    } catch (Throwable inner) {
+      Log.e(TAG, "Failed to handle crash, delegating to default handler", inner);
     }
+    // 崩溃页跳转失败也必须终止进程，否则进程会半死不活地挂住
+    if (defaultHandler != null) {
+      defaultHandler.uncaughtException(thread, ex);
+    }
+    android.os.Process.killProcess(android.os.Process.myPid());
+    System.exit(10);
+  }
 
-    String logFile = saveCrashInfo(ex);
-
+  private void showCrashPage(String logFile) {
     Intent crashIntent = new Intent(appContext, CrashDetailPage.class);
     crashIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
     if (!TextUtils.isEmpty(logFile)) {
       crashIntent.putExtra("crashFile", logFile);
     }
     appContext.startActivity(crashIntent);
-
-    android.os.Process.killProcess(android.os.Process.myPid());
-    System.exit(10);
-  }
-
-  private boolean handleException(Throwable ex) {
-    if (ex == null) return false;
-    collectDeviceInfo();
-    return true;
   }
 
   private void collectDeviceInfo() {

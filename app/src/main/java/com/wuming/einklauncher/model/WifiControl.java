@@ -44,8 +44,22 @@ public class WifiControl {
 
   private static WifiControl instance;
 
+  /**
+   * 初始化单例。Launcher 每次 onCreate 都会调用，重复创建会在
+   * application context 上叠加永不注销的接收器，故已存在时直接复用。
+   */
   public static void init(Context context) {
-    instance = new WifiControl(context.getApplicationContext());
+    if (instance == null) {
+      instance = new WifiControl(context.getApplicationContext());
+    }
+  }
+
+  /** 随 Launcher onDestroy 释放接收器与实例，进程内无其他持有者 */
+  public static void shutdown() {
+    if (instance != null) {
+      instance.appContext.unregisterReceiver(instance.wifiStateReceiver);
+      instance = null;
+    }
   }
 
   private WifiControl(Context context) {
@@ -108,7 +122,11 @@ public class WifiControl {
   public static void onLongClickWifiItem() {
     Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-    instance.appContext.startActivity(intent);
+    try {
+      instance.appContext.startActivity(intent);
+    } catch (Exception e) {
+      Log.w(TAG, "Unable to open wifi settings", e);
+    }
   }
 
   private void applyWifiState(int wifiState) {

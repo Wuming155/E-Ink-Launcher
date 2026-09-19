@@ -17,6 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
@@ -88,12 +89,12 @@ public class CrashDetailPage extends Activity {
     if (getIntent().hasExtra("crashFile")) {
       String fileName = getIntent().getStringExtra("crashFile");
       File crashFile = new File(getExternalFilesDir("crash"), fileName);
-      try {
-        char[] readData = new char[(int) crashFile.length()];
-        FileReader reader = new FileReader(crashFile);
-        reader.read(readData);
-        tvContent.append(new String(readData));
-        reader.close();
+      try (BufferedReader reader = new BufferedReader(new FileReader(crashFile))) {
+        char[] buffer = new char[8192];
+        int read;
+        while ((read = reader.read(buffer)) > 0) {
+          tvContent.append(new String(buffer, 0, read));
+        }
       } catch (Throwable e) {
         e.printStackTrace();
       }

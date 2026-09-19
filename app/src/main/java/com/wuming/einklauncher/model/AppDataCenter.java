@@ -194,6 +194,16 @@ public class AppDataCenter {
   // 翻页
   // =========================================================================
 
+  public int getPageIndex() {
+    return pageIndex;
+  }
+
+  /** 恢复页码（进程重建后），越界时钳制到有效范围 */
+  public void setPageIndex(int index) {
+    pageIndex = Math.max(0, Math.min(index, pageCount));
+    setPageShow();
+  }
+
   public void showNextPage() {
     if (pageIndex >= pageCount) return;
     pageIndex++;
@@ -237,7 +247,8 @@ public class AppDataCenter {
     }
 
     mApps.clear();
-    for (ResolveInfo resolveInfo : mContext.getPackageManager().queryIntentActivities(mainIntent, 0)) {
+    List<ResolveInfo> resolved = queryLaunchableApps(mainIntent);
+    for (ResolveInfo resolveInfo : resolved) {
       if ("com.wuming.einklauncher.Launcher".equals(resolveInfo.activityInfo.name)) continue;
       if (!hideApps.contains(resolveInfo.activityInfo.packageName)) {
         mApps.add(resolveInfo);
@@ -259,7 +270,7 @@ public class AppDataCenter {
     mainIntent.addCategory(Intent.CATEGORY_LAUNCHER);
 
     mApps.clear();
-    mApps.addAll(mContext.getPackageManager().queryIntentActivities(mainIntent, 0));
+    mApps.addAll(queryLaunchableApps(mainIntent));
     mApps.add(createPowerIcon());
     mApps.add(createWifiIcon());
     if (binder != null) {
@@ -269,9 +280,24 @@ public class AppDataCenter {
     updatePageCount();
   }
 
+  /**
+   * 查询可启动应用。PMS 在 Binder 死亡/并发变更时可能抛异常或返回 null，
+   * 桌面绝不允许因应用列表查询失败而崩溃，出错时返回空列表保持当前 UI 可用。
+   */
+  private List<ResolveInfo> queryLaunchableApps(Intent mainIntent) {
+    try {
+      List<ResolveInfo> list = mContext.getPackageManager().queryIntentActivities(mainIntent, 0);
+      return list != null ? list : Collections.<ResolveInfo>emptyList();
+    } catch (Exception e) {
+      android.util.Log.w("AppDataCenter", "queryIntentActivities failed", e);
+      return Collections.emptyList();
+    }
+  }
+
   private void setPageShow() {
     int itemCount = colNum * rowNum;
-    int pageStart = pageIndex * itemCount;
+    // 应用数减少（卸载/隐藏）但 updatePageCount 尚未跑过时，防 subList 越界
+    int pageStart = Math.min(pageIndex * itemCount, mApps.size());
     int pageEnd = Math.min(pageStart + itemCount, mApps.size());
     adapter.setAppList(mApps.subList(pageStart, pageEnd));
     updatePageStatusView();
@@ -293,8 +319,13 @@ public class AppDataCenter {
   private void sortApps() {
     int mode = (layoutLocked || layoutAdjusting)
         ? AppSortComparator.SORT_CUSTOM : sortMode;
-    Collections.sort(mApps,
-        new AppSortComparator(mContext, mContext.getPackageManager(), mode, customOrder));
+    try {
+      Collections.sort(mApps,
+          new AppSortComparator(mContext, mContext.getPackageManager(), mode, customOrder));
+    } catch (IllegalArgumentException e) {
+      // 比较器契约被破坏（排序数据并发变化）时保持当前顺序，不崩桌面
+      android.util.Log.w("AppDataCenter", "sortApps failed, keeping current order", e);
+    }
   }
 
   // =========================================================================

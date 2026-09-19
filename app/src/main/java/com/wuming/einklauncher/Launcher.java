@@ -5,6 +5,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.admin.DevicePolicyManager;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -53,6 +54,9 @@ public class Launcher extends Activity
     SettingFragment.OnSettingChangeListener {
 
   private static final int REQUEST_DEVICE_ADMIN = 10001;
+  private static final String STATE_PAGE_INDEX = "pageIndex";
+  private static final String STATE_LAYOUT_ADJUSTING = "layoutAdjusting";
+  private static final String STATE_ADJUST_SELECTED_PKG = "adjustSelectedPkg";
   private Runnable unregisterBackCallback;
 
   // ---- Views ----
@@ -125,7 +129,7 @@ public class Launcher extends Activity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.launcher_activity);
 
-    config = new Config(this);
+    config = Config.get(this);
     WifiControl.init(this);
     applyStatusBarVisibility();
 
@@ -136,6 +140,50 @@ public class Launcher extends Activity
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
       unregisterBackCallback = Api33Back.register(this);
     }
+    restoreState(savedInstanceState);
+  }
+
+  /**
+   * 桌面进程被系统回收后恢复页码与布局调整模式，
+   * 避免用户重启桌面丢失当前位置。
+   */
+  private void restoreState(Bundle saved) {
+    if (saved == null) return;
+    dataCenter.setPageIndex(saved.getInt(STATE_PAGE_INDEX, 0));
+    if (saved.getBoolean(STATE_LAYOUT_ADJUSTING, false)) {
+      enterLayoutAdjust();
+      String pkg = saved.getString(STATE_ADJUST_SELECTED_PKG);
+      if (pkg != null) {
+        adjustSelectedPkg = pkg;
+        binder.setSelectedPkg(pkg);
+        adapter.refreshDisplay();
+      }
+    }
+  }
+
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putInt(STATE_PAGE_INDEX, dataCenter.getPageIndex());
+    outState.putBoolean(STATE_LAYOUT_ADJUSTING, binder.isAdjust());
+    outState.putString(STATE_ADJUST_SELECTED_PKG, adjustSelectedPkg);
+  }
+
+  @Override
+  protected void onNewIntent(Intent intent) {
+    super.onNewIntent(intent);
+    setIntent(intent);
+    // 从其他应用回到桌面：收起设置页、退出未完成的临时模式
+    getFragmentManager().popBackStackImmediate();
+    if (binder.isAdjust()) {
+      exitLayoutAdjust();
+    }
+    if (binder.isDelete()) {
+      binder.setDelete(false);
+      dataCenter.refreshAppList();
+      config.setHideApps(dataCenter.getHideApps());
+    }
+    findViewById(R.id.deleteFinish).setVisibility(View.GONE);
   }
 
   @Override
@@ -159,7 +207,12 @@ public class Launcher extends Activity
     }
     super.onDestroy();
     unregisterDynamicReceivers();
-    unregisterReceiver(appChangeReceiver);
+    try {
+      unregisterReceiver(appChangeReceiver);
+    } catch (IllegalArgumentException ignored) {
+      // 注册失败过（onCreate 提前异常）时这里未注册，忽略
+    }
+    WifiControl.shutdown();
   }
 
   // =========================================================================
@@ -397,7 +450,14 @@ public class Launcher extends Activity
       intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
       intent.addCategory(Intent.CATEGORY_LAUNCHER);
       intent.setComponent(comp);
-      startActivity(intent);
+      try {
+        startActivity(intent);
+      } catch (ActivityNotFoundException e) {
+        // 应用被卸载但列表未刷新等情况，桌面不应跟着崩
+        Toast.makeText(this, R.string.launch_failed, Toast.LENGTH_SHORT).show();
+      } catch (SecurityException e) {
+        Toast.makeText(this, R.string.launch_failed, Toast.LENGTH_SHORT).show();
+      }
     }
   }
 
@@ -425,7 +485,11 @@ public class Launcher extends Activity
   public void onItemDeleteClick(ResolveInfo info) {
     Intent deleteIntent = new Intent(Intent.ACTION_DELETE,
         Uri.parse("package:" + info.activityInfo.packageName));
-    startActivity(deleteIntent);
+    try {
+      startActivity(deleteIntent);
+    } catch (ActivityNotFoundException e) {
+      Toast.makeText(this, R.string.launch_failed, Toast.LENGTH_SHORT).show();
+    }
   }
 
   @Override
@@ -523,10 +587,19 @@ public class Launcher extends Activity
               Intent intent = new Intent("android.intent.action.ACTION_REQUEST_SHUTDOWN");
               intent.putExtra("android.intent.extra.KEY_CONFIRM", false);
               intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-              startActivity(intent);
+              try {
+                startActivity(intent);
+              } catch (Exception e) {
+                Toast.makeText(Launcher.this, R.string.launch_failed, Toast.LENGTH_SHORT).show();
+              }
             } else {
-              PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-              pm.reboot("重启");
+              try {
+                PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                pm.reboot("重启");
+              } catch (Exception e) {
+                // 非系统签名时 reboot 会抛 SecurityException，提示而不是崩溃
+                Toast.makeText(Launcher.this, R.string.launch_failed, Toast.LENGTH_SHORT).show();
+              }
             }
           }
         })
@@ -564,7 +637,11 @@ public class Launcher extends Activity
           public void onClick(DialogInterface dialog, int which) {
             Intent deleteIntent = new Intent(Intent.ACTION_DELETE,
                 Uri.parse("package:" + packageName));
-            startActivity(deleteIntent);
+            try {
+              startActivity(deleteIntent);
+            } catch (ActivityNotFoundException e) {
+              Toast.makeText(Launcher.this, R.string.launch_failed, Toast.LENGTH_SHORT).show();
+            }
           }
         })
         .show();
@@ -733,14 +810,22 @@ public class Launcher extends Activity
 
   @Override
   public boolean onKeyUp(int keyCode, KeyEvent event) {
-    if (keyCode == KeyEvent.KEYCODE_PAGE_UP) {
-      dataCenter.showLastPage();
-      return true;
-    } else if (keyCode == KeyEvent.KEYCODE_PAGE_DOWN) {
-      dataCenter.showNextPage();
-      return true;
+    // 兼容各类墨水屏阅读器的物理翻页键（不同厂商发的 keycode 不一致）
+    switch (keyCode) {
+      case KeyEvent.KEYCODE_PAGE_UP:
+      case KeyEvent.KEYCODE_BUTTON_L1:
+      case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
+        dataCenter.showLastPage();
+        return true;
+      case KeyEvent.KEYCODE_PAGE_DOWN:
+      case KeyEvent.KEYCODE_BUTTON_R1:
+      case KeyEvent.KEYCODE_MEDIA_NEXT:
+      case KeyEvent.KEYCODE_FORWARD:
+        dataCenter.showNextPage();
+        return true;
+      default:
+        return super.onKeyUp(keyCode, event);
     }
-    return super.onKeyUp(keyCode, event);
   }
 
   @SuppressLint("GestureBackNavigation")
@@ -751,9 +836,7 @@ public class Launcher extends Activity
 
   @Override
   public void onBackRequested() {
-    if (getFragmentManager().popBackStackImmediate()) {
-      config.setFontSize(config.getFontSize());
-    }
+    getFragmentManager().popBackStackImmediate();
   }
 
   @androidx.annotation.RequiresApi(Build.VERSION_CODES.TIRAMISU)
@@ -787,7 +870,11 @@ public class Launcher extends Activity
     Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
     intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, new ComponentName(this, AdminReceiver.class));
     intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "E-Ink Launcher 获取锁屏权限");
-    startActivity(intent);
+    try {
+      startActivity(intent);
+    } catch (ActivityNotFoundException e) {
+      showDeviceAdminDialog();
+    }
   }
 
   private void showDeviceAdminDialog() {
@@ -816,7 +903,11 @@ public class Launcher extends Activity
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
     if (resultCode == RESULT_OK && requestCode == REQUEST_DEVICE_ADMIN) {
-      policyManager.lockNow();
+      try {
+        policyManager.lockNow();
+      } catch (SecurityException e) {
+        showDeviceAdminDialog();
+      }
     }
   }
 
