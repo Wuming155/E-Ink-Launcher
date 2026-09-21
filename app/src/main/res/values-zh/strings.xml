@@ -50,6 +50,9 @@
     <string name="wifi_status_disconnecting">WiFi 断开中</string>
 
     <string name="item_lockscreen">一键锁屏</string>
+    <string name="item_lockscreen_builtin">一键锁屏 (内置)</string>
+    <string name="hide_builtin_lock">隐藏此图标</string>
+    <string name="hide_builtin_lock_hint">已隐藏内置一键锁屏，可在「设置 -&gt; 管理应用」中恢复显示</string>
 
     <string-array name="power_menu">
         <item>关机</item>
@@ -78,6 +81,7 @@
     <string name="layout_locked_toast">布局已锁定，请先解锁</string>
     <string name="setting_layout_adjust">布局调整</string>
     <string name="adjust_mode_hint">布局调整：长按选中应用，再点击另一应用交换位置；点击已选中的应用取消</string>
+    <string name="layout_adjust_saved">布局调整已保存</string>
     <string name="dialog_ok">确定</string>
     <string name="launch_failed">启动失败</string>
     <string name="launch_devicemanager">打开设备管理器</string>

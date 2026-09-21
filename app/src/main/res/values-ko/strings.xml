@@ -16,6 +16,7 @@
     <string name="dialog_ok">확인</string>
     <string name="setting_layout_adjust">레이아웃 조정</string>
     <string name="adjust_mode_hint">레이아웃 조정: 앱을 길게 눌러 선택한 뒤 다른 앱을 눌러 위치를 교환하고, 선택된 앱을 다시 누르면 취소됩니다.</string>
+    <string name="layout_adjust_saved">레이아웃이 저장되었습니다</string>
     <string name="dialog_close">닫기</string>
     <string name="dialog_confim">확인</string>
     <string name="dialog_hide">숨기기</string>
@@ -25,6 +26,9 @@
     <string name="exit">종료</string>
     <string name="file_manager">파일 탐색기</string>
     <string name="item_lockscreen">화면 잠금</string>
+    <string name="item_lockscreen_builtin">화면 잠금 (기본)</string>
+    <string name="hide_builtin_lock">이 아이콘 숨기기</string>
+    <string name="hide_builtin_lock_hint">기본 화면 잠금이 숨겨졌습니다. 설정 -&gt; 앱 관리자에서 다시 표시할 수 있습니다.</string>
     <string name="parent_folder">상위 폴더</string>
     <string name="path">경로</string>
     <string name="power_title">기기 종료</string>

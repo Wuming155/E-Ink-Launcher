@@ -32,7 +32,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -255,6 +258,12 @@ public class Launcher extends Activity
     dataCenter.setSortMode(config.getSortMode());
     dataCenter.setLayoutLocked(config.isLayoutLocked());
     dataCenter.setCustomOrder(config.getCustomOrder());
+    dataCenter.setOnOrderChangeListener(new AppDataCenter.OnOrderChangeListener() {
+      @Override
+      public void onOrderChanged(List<String> newOrder) {
+        config.setCustomOrder(newOrder);
+      }
+    });
     dataCenter.setHideApps(config.getHideApps());
     dataCenter.setPageStatus(pageStatus);
     dataCenter.setAdapter(adapter);
@@ -367,23 +376,20 @@ public class Launcher extends Activity
   @Override
   public void onSortModeChanged(int mode) {
     if (config.isLayoutLocked()) return;
-    dataCenter.setSortMode(mode);
-    dataCenter.refreshAppList(binder.isDelete());
+    dataCenter.reorderAppsByMode(mode);
   }
 
   @Override
   public void onLayoutLockedChanged(boolean locked) {
     if (locked) {
-      // 管理模式下列表包含被隐藏应用与自身，先回到常规列表再快照
+      // 管理模式下列表包含被隐藏应用与自身，先回到常规列表
       if (binder.isDelete()) {
         binder.setDelete(false);
         findViewById(R.id.deleteFinish).setVisibility(View.GONE);
         dataCenter.refreshAppList();
       }
-      // 取当前屏幕顺序快照并固化
-      List<String> order = dataCenter.getAppOrder();
-      config.setCustomOrder(order);
-      dataCenter.setCustomOrder(order);
+      // 顺序表由 AppDataCenter 增量维护，这里只同步持久化并锁定
+      config.setCustomOrder(dataCenter.getCustomOrder());
       dataCenter.setLayoutLocked(true);
     } else {
       dataCenter.setLayoutLocked(false);
@@ -515,8 +521,7 @@ public class Launcher extends Activity
     } else if (dataCenter.swapApps(adjustSelectedPkg, pkg)) {
       adjustSelectedPkg = null;
       binder.setSelectedPkg(null);
-      config.setCustomOrder(dataCenter.getAppOrder());
-      // swapApps 内部已重新分页绑定
+      // swapApps 内部已刷新顺序表并通知持久化，且已重新分页绑定
     }
   }
 
@@ -525,8 +530,7 @@ public class Launcher extends Activity
     if (binder.isDelete()) {
       binder.setDelete(false);
     }
-    // 以当前显示顺序为调整基准，调整期间临时走自定义排序
-    config.setCustomOrder(dataCenter.getAppOrder());
+    // 沿用已保存的顺序表；若为空，随后的刷新会自动登记当前可见应用
     dataCenter.setCustomOrder(config.getCustomOrder());
     adjustSelectedPkg = null;
     binder.setSelectedPkg(null);
@@ -542,9 +546,9 @@ public class Launcher extends Activity
     binder.setSelectedPkg(null);
     binder.setAdjust(false);
     dataCenter.setLayoutAdjusting(false);
-    // 固化调整结果；未锁定布局时后续列表刷新会按排序方式重排，
-    // 锁定布局后始终按此自定义顺序显示
-    config.setCustomOrder(dataCenter.getAppOrder());
+    // 持久化完整顺序表，保证应用安装、更新、清理垃圾或重启后位置都不变
+    config.setCustomOrder(dataCenter.getCustomOrder());
+    Toast.makeText(this, R.string.layout_adjust_saved, Toast.LENGTH_SHORT).show();
   }
 
   @Override
@@ -577,13 +581,19 @@ public class Launcher extends Activity
   }
 
   private void showPowerMenu() {
-    if (!isSystemApp) return;
+    List<String> items = new ArrayList<>();
+    if (isSystemApp) {
+      String[] powerArray = getResources().getStringArray(R.array.power_menu);
+      Collections.addAll(items, powerArray);
+    }
+    items.add(getString(R.string.hide_builtin_lock));
+
     new AlertDialog.Builder(this)
-        .setTitle(R.string.power_title)
-        .setItems(R.array.power_menu, new DialogInterface.OnClickListener() {
+        .setTitle(R.string.item_lockscreen_builtin)
+        .setItems(items.toArray(new String[0]), new DialogInterface.OnClickListener() {
           @Override
           public void onClick(DialogInterface dialog, int which) {
-            if (which == 0) {
+            if (isSystemApp && which == 0) {
               Intent intent = new Intent("android.intent.action.ACTION_REQUEST_SHUTDOWN");
               intent.putExtra("android.intent.extra.KEY_CONFIRM", false);
               intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -592,7 +602,7 @@ public class Launcher extends Activity
               } catch (Exception e) {
                 Toast.makeText(Launcher.this, R.string.launch_failed, Toast.LENGTH_SHORT).show();
               }
-            } else {
+            } else if (isSystemApp && which == 1) {
               try {
                 PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
                 pm.reboot("重启");
@@ -600,6 +610,12 @@ public class Launcher extends Activity
                 // 非系统签名时 reboot 会抛 SecurityException，提示而不是崩溃
                 Toast.makeText(Launcher.this, R.string.launch_failed, Toast.LENGTH_SHORT).show();
               }
+            } else {
+              Set<String> hideApps = binder.getHideAppPkg();
+              hideApps.add(AppDataCenter.LOCK_PACKAGE_NAME);
+              config.setHideApps(hideApps);
+              dataCenter.refreshAppList();
+              Toast.makeText(Launcher.this, R.string.hide_builtin_lock_hint, Toast.LENGTH_LONG).show();
             }
           }
         })
@@ -625,10 +641,13 @@ public class Launcher extends Activity
         .setNeutralButton(R.string.dialog_hide, new DialogInterface.OnClickListener() {
           @Override
           public void onClick(DialogInterface dialog, int which) {
-            Set<String> hideApps = binder.getHideAppPkg();
+            Set<String> hideApps = new HashSet<>(binder.getHideAppPkg());
             if (!hideApps.add(packageName)) {
               hideApps.remove(packageName);
             }
+            binder.setHideAppPkg(hideApps);
+            // 立即同步落盘，避免进程被清理查杀后隐藏状态失效
+            config.setHideApps(hideApps);
             dataCenter.refreshAppList();
           }
         })

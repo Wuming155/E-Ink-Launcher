@@ -123,12 +123,34 @@ public class AppDataCenter {
     return layoutLocked;
   }
 
+  public interface OnOrderChangeListener {
+    void onOrderChanged(List<String> newOrder);
+  }
+
+  private OnOrderChangeListener orderChangeListener;
+
+  public void setOnOrderChangeListener(OnOrderChangeListener listener) {
+    this.orderChangeListener = listener;
+  }
+
   /** 设置自定义顺序（包名列表） */
   public void setCustomOrder(List<String> order) {
     customOrder.clear();
     if (order != null) {
       customOrder.addAll(order);
     }
+  }
+
+  /** 返回当前自定义顺序的副本（含被隐藏应用的登记项） */
+  public List<String> getCustomOrder() {
+    return new ArrayList<>(customOrder);
+  }
+
+  /** 主动按排序模式重排桌面，并更新自定义顺序 */
+  public void reorderAppsByMode(int mode) {
+    this.sortMode = mode;
+    this.customOrder.clear();
+    refreshAppList(false);
   }
 
   /**
@@ -183,9 +205,20 @@ public class AppDataCenter {
     if (indexA < 0 || indexB < 0) return false;
 
     Collections.swap(mApps, indexA, indexB);
-    // 以交换后的顺序刷新自定义顺序，保证调整期间及锁定布局后顺序稳定
-    customOrder.clear();
-    customOrder.addAll(getAppOrder());
+
+    // 只交换这两个包名在顺序表中的位置，其余登记项（含被隐藏、暂未安装的应用）原地不动，
+    // 避免用"当前可见列表"整体覆盖导致其它应用位置漂移。
+    if (!customOrder.contains(pkgA)) {
+      customOrder.add(pkgA);
+    }
+    if (!customOrder.contains(pkgB)) {
+      customOrder.add(pkgB);
+    }
+    Collections.swap(customOrder, customOrder.indexOf(pkgA), customOrder.indexOf(pkgB));
+
+    if (orderChangeListener != null) {
+      orderChangeListener.onOrderChanged(new ArrayList<>(customOrder));
+    }
     setPageShow();
     return true;
   }
@@ -261,7 +294,7 @@ public class AppDataCenter {
     if (!hideApps.contains(WIFI_PACKAGE_NAME)) {
       mApps.add(createWifiIcon());
     }
-    sortApps();
+    sortApps(true);
     updatePageCount();
   }
 
@@ -276,7 +309,7 @@ public class AppDataCenter {
     if (binder != null) {
       binder.setHideAppPkg(hideApps);
     }
-    sortApps();
+    sortApps(false);
     updatePageCount();
   }
 
@@ -316,15 +349,39 @@ public class AppDataCenter {
     pageIndex = Math.min(pageIndex, pageCount);
   }
 
-  private void sortApps() {
-    int mode = (layoutLocked || layoutAdjusting)
-        ? AppSortComparator.SORT_CUSTOM : sortMode;
+  private void sortApps(boolean registerNewPackages) {
+    // 只要存在自定义顺序，就始终按它排列（不再受布局锁定状态影响）
+    int mode = customOrder.isEmpty() ? sortMode : AppSortComparator.SORT_CUSTOM;
     try {
       Collections.sort(mApps,
           new AppSortComparator(mContext, mContext.getPackageManager(), mode, customOrder));
     } catch (IllegalArgumentException e) {
       // 比较器契约被破坏（排序数据并发变化）时保持当前顺序，不崩桌面
       android.util.Log.w("AppDataCenter", "sortApps failed, keeping current order", e);
+    }
+
+    if (registerNewPackages) {
+      registerNewPackages();
+    }
+  }
+
+  /**
+   * 只把"尚未登记"的包名追加到顺序表末尾，绝不删除已有登记项。
+   * <p>
+   * 这样卸载、隐藏、清理垃圾或系统刷新后重新出现的应用，仍能回到它原来的位置，
+   * 不会因为一次列表重建就被挤到队尾或整体重排。
+   */
+  private void registerNewPackages() {
+    Set<String> known = new HashSet<>(customOrder);
+    boolean changed = false;
+    for (String pkg : getAppOrder()) {
+      if (known.add(pkg)) {
+        customOrder.add(pkg);
+        changed = true;
+      }
+    }
+    if (changed && orderChangeListener != null) {
+      orderChangeListener.onOrderChanged(new ArrayList<>(customOrder));
     }
   }
 

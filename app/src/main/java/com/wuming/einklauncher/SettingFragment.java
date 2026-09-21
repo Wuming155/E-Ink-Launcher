@@ -136,11 +136,15 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
   }
 
   private void initSpinners() {
+    // 注意：Spinner 在首次布局后会回调一次 onItemSelected（即使只是回填当前值）。
+    // 若无条件把回调转发给宿主，每次打开设置页都会触发一次"重排"，
+    // 把用户手工调整好的布局冲掉。因此所有 Spinner 都必须先判断"值是否真的变了"。
     rowNumSpinner.setSelection(config.getRowNum() - 2, false);
     rowNumSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         int rowNum = position + 2;
+        if (rowNum == config.getRowNum()) return;   // 初始回填，忽略
         config.setRowNum(rowNum);
         listener.onRowNumChanged(rowNum);
       }
@@ -155,6 +159,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         int colNum = position + 2;
+        if (colNum == config.getColNum()) return;   // 初始回填，忽略
         config.setColNum(colNum);
         listener.onColNumChanged(colNum);
       }
@@ -169,6 +174,7 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         int lines = (position == 3) ? Integer.MAX_VALUE : position;
+        if (lines == config.getAppNameLines()) return;   // 初始回填，忽略
         config.setAppNameLines(lines);
         listener.onAppNameLinesChanged(lines);
       }
@@ -182,14 +188,17 @@ public class SettingFragment extends Fragment implements View.OnClickListener {
     sortModeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        // 关键：初始回填或重复选中同一项时直接返回。
+        // 否则会误触发一次"按排序方式重排"，清掉用户手工调整的布局。
+        if (position == config.getSortMode()) {
+          return;
+        }
         if (config.isLayoutLocked()) {
           // 锁定状态下拒绝切换排序方式，回退到原选项
-          if (position != config.getSortMode()) {
-            if (config.isShowLockHint()) {
-              Toast.makeText(getActivity(), R.string.layout_locked_toast, Toast.LENGTH_SHORT).show();
-            }
-            sortModeSpinner.setSelection(config.getSortMode(), false);
+          if (config.isShowLockHint()) {
+            Toast.makeText(getActivity(), R.string.layout_locked_toast, Toast.LENGTH_SHORT).show();
           }
+          sortModeSpinner.setSelection(config.getSortMode(), false);
           return;
         }
         if (AppSortComparator.modeNeedsUsageStats(position)

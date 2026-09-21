@@ -51,6 +51,9 @@
     <string name="wifi_status_disconnecting">WiFi disconnecting</string>
 
     <string name="item_lockscreen">Lock Screen</string>
+    <string name="item_lockscreen_builtin">Lock Screen (Built-in)</string>
+    <string name="hide_builtin_lock">Hide This Icon</string>
+    <string name="hide_builtin_lock_hint">Built-in lock screen hidden. You can restore it in Settings -&gt; Manage Apps.</string>
     <string name="launch_failed">Launch failed</string>
     <string name="launch_devicemanager_failed">Please open Device Policy Manager and enable E-Ink Launcher</string>
     <string name="launch_devicemanager">Open Device Policy Manager</string>
@@ -80,6 +83,7 @@
     <string name="layout_locked_toast">Layout is locked, unlock it first</string>
     <string name="setting_layout_adjust">Adjust Layout</string>
     <string name="adjust_mode_hint">Adjust layout: long-press to select an app, then tap another to swap positions. Tap the selected app again to cancel.</string>
+    <string name="layout_adjust_saved">Layout adjusted and saved</string>
     <string name="dialog_ok">OK</string>
     <string name="restart_launcher">Restart Launcher</string>
     <string name="about_thanks">Thanks:\n%1$s</string>

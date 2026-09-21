@@ -40,6 +40,7 @@
     <string name="dialog_ok">OK</string>
     <string name="setting_layout_adjust">Dostosuj układ</string>
     <string name="adjust_mode_hint">Dostosuj układ: przytrzymaj aplikację, aby ją wybrać, a następnie dotknij innej, aby zamienić pozycje. Dotknięcie wybranej aplikacji anuluje wybór.</string>
+    <string name="layout_adjust_saved">Układ został zapisany</string>
     <string name="dialog_hide">Ukryj</string>
     <string name="dialog_uninstall">Odinstaluj</string>
     <string name="dialog_pkg_name">Nazwa pakietu: %s</string>
@@ -55,6 +56,9 @@
     <string name="wifi_status_disconnecting">Rozłączanie WiFi</string>
 
     <string name="item_lockscreen">Zablokuj ekran</string>
+    <string name="item_lockscreen_builtin">Zablokuj ekran (wbudowane)</string>
+    <string name="hide_builtin_lock">Ukryj tę ikonę</string>
+    <string name="hide_builtin_lock_hint">Wbudowana blokada ekranu została ukryta. Możesz ją przywrócić w Ustawienia -&gt; Menedżer aplikacji.</string>
 
     <string-array name="power_menu">
         <item>Wyłącz</item>

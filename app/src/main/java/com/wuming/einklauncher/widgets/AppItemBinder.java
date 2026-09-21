@@ -199,7 +199,7 @@ public class AppItemBinder {
       WifiControl.bind(holder.itemView, customIcons);
     } else if (AppDataCenter.LOCK_PACKAGE_NAME.equals(pkg)) {
       loadIcon(holder.appImage, pkg, R.drawable.ic_onekeylock, customIcons);
-      holder.appName.setText(R.string.item_lockscreen);
+      holder.appName.setText(isDelete ? R.string.item_lockscreen_builtin : R.string.item_lockscreen);
     } else {
       loadIcon(holder.appImage, pkg, info, customIcons);
       String label = customLabels != null ? customLabels.get(pkg) : null;

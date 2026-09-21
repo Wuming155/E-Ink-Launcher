@@ -126,20 +126,20 @@ public class Config {
   public void addHideApp(String packageName) {
     ensureHideAppsLoaded();
     hideApps.add(packageName);
-    prefs.edit().putStringSet(KEY_HIDE_APPS, hideApps).apply();
+    prefs.edit().putStringSet(KEY_HIDE_APPS, hideApps).commit();
   }
 
   public void removeHideApp(String packageName) {
     ensureHideAppsLoaded();
     hideApps.remove(packageName);
-    prefs.edit().putStringSet(KEY_HIDE_APPS, hideApps).apply();
+    prefs.edit().putStringSet(KEY_HIDE_APPS, hideApps).commit();
   }
 
   public void setHideApps(Set<String> hideApps) {
     this.hideApps.clear();
     this.hideApps.addAll(hideApps);
     this.hideAppsLoaded = true;
-    prefs.edit().putStringSet(KEY_HIDE_APPS, this.hideApps).apply();
+    prefs.edit().putStringSet(KEY_HIDE_APPS, this.hideApps).commit();
   }
 
   public Set<String> getHideApps() {
@@ -236,7 +236,7 @@ public class Config {
 
   public void setLayoutLocked(boolean locked) {
     this.layoutLocked = locked;
-    prefs.edit().putBoolean(KEY_LAYOUT_LOCKED, locked).apply();
+    prefs.edit().putBoolean(KEY_LAYOUT_LOCKED, locked).commit();
   }
 
   /** 锁定状态下切换排序方式被拒绝时，是否弹出提示 */
@@ -261,7 +261,7 @@ public class Config {
     prefs.edit().putBoolean(KEY_TEXT_BOLD, bold).apply();
   }
 
-  // ---- 自定义顺序（布局锁定时用于固化图标顺序） ----
+  // ---- 自定义顺序（桌面图标顺序的持久化登记表） ----
 
   /** 获取自定义顺序（包名有序列表），未设置时返回空列表 */
   public List<String> getCustomOrder() {
@@ -271,9 +271,13 @@ public class Config {
     return customOrder;
   }
 
+  /**
+   * 保存桌面图标顺序。使用 commit 同步落盘：
+   * 顺序一旦变化就立即写盘，即使随后进程被"清理垃圾"强行杀死也不会丢失。
+   */
   public void setCustomOrder(List<String> order) {
     customOrder = new ArrayList<>(order);
-    prefs.edit().putString(KEY_CUSTOM_ORDER, ConfigCodec.encodeOrder(customOrder)).apply();
+    prefs.edit().putString(KEY_CUSTOM_ORDER, ConfigCodec.encodeOrder(customOrder)).commit();
   }
 
   // ---- 自定义应用名称 ----
